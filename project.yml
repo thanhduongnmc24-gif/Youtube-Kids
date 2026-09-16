@@ -12,9 +12,9 @@ targets:
     type: application
     platform: iOS
     sources:
-      - MaNguon
-    resources:
+      - path: MaNguon
       - path: TaiNguyen/HinhAnh.xcassets
+        buildPhase: resources
       - path: TaiNguyen/VideoMacDinh.json
         buildPhase: resources
     settings:
@@ -24,8 +24,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: BieuTuongUngDung
         CODE_SIGN_STYLE: Manual
-        MARKETING_VERSION: 6.7
-        CURRENT_PROJECT_VERSION: 67
+        MARKETING_VERSION: 6.8
+        CURRENT_PROJECT_VERSION: 68
     info:
       path: MaNguon/Info.plist
       properties:

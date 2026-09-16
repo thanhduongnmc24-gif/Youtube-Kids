@@ -46,6 +46,12 @@ jobs:
       - name: Tao du an Xcode
         run: xcodegen generate
 
+      - name: Kiem tra resource build phase
+        run: |
+          grep -q "VideoMacDinh.json in Resources" BeXemVui.xcodeproj/project.pbxproj || { echo "VideoMacDinh.json chua nam trong Resources build phase"; exit 1; }
+          grep -q "HinhAnh.xcassets in Resources" BeXemVui.xcodeproj/project.pbxproj || { echo "HinhAnh.xcassets chua nam trong Resources build phase"; exit 1; }
+          echo "Resource build phase hop le."
+
       - name: Kiem tra scheme
         run: xcodebuild -list -project BeXemVui.xcodeproj
 

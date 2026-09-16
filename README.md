@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.7
+# Bé Xem Vui v6.8
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -60,3 +60,9 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Khai báo riêng `HinhAnh.xcassets` và `VideoMacDinh.json` trong resource build phase của XcodeGen.
 - Workflow tìm JSON trong toàn bộ app bundle thay vì chỉ kiểm tra một vị trí cứng.
 - Tăng build number lên 67.
+
+
+## Bản v6.8
+- Sửa đúng cú pháp XcodeGen: đưa JSON và asset catalog vào `sources` với `buildPhase: resources`.
+- Workflow kiểm tra trực tiếp file project.pbxproj trước khi archive.
+- Tăng phiên bản lên 6.8, build 68.
