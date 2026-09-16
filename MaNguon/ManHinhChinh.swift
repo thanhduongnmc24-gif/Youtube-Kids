@@ -8,9 +8,14 @@ struct ManHinhChinh: View {
     @State private var moKhoa = false
     @State private var hienPin = false
     @State private var baoHetGio = false
+    @State private var thuTuXaoTron: [String] = []
     private let cot = [GridItem(.adaptive(minimum: 250), spacing: 22)]
 
-    var videos: [VideoTreEm] { kho.duLieu.videos.filter { $0.dangBat && (danhMuc == "Tất cả" || $0.danhMuc == danhMuc) && (timKiem.isEmpty || $0.tieuDe.localizedCaseInsensitiveContains(timKiem)) } }
+    var videos: [VideoTreEm] {
+        let loc = kho.duLieu.videos.filter { $0.dangBat && (danhMuc == "Tất cả" || $0.danhMuc == danhMuc) && (timKiem.isEmpty || $0.tieuDe.localizedCaseInsensitiveContains(timKiem)) }
+        let viTri = Dictionary(uniqueKeysWithValues: thuTuXaoTron.enumerated().map { ($1, $0) })
+        return loc.sorted { (viTri[$0.id] ?? Int.max) < (viTri[$1.id] ?? Int.max) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -30,7 +35,8 @@ struct ManHinhChinh: View {
             .sheet(isPresented: $hienPin) { KhoaPhuHuynh { moKhoa = true; hienPin = false } }
             .sheet(isPresented: $moKhoa) { NavigationStack { ManHinhCaiDat() } }
             .alert("Đã đến giờ nghỉ", isPresented: $baoHetGio) { Button("Đã hiểu") {} } message: { Text("Bé đã hết thời gian xem hôm nay hoặc đang ngoài khung giờ được phép.") }
-            .task { await kho.quetVideoLocal() }
+            .task { await kho.quetVideoLocal(); xaoTron() }
+            .onChange(of: kho.duLieu.videos.map(\.id)) { _ in xaoTronNeuCan() }
         }
     }
 
@@ -44,6 +50,13 @@ struct ManHinhChinh: View {
         }
     }
     private var thanhDanhMuc: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 12) { ForEach(kho.duLieu.cauHinh.danhMuc, id: \.self) { d in Button(d) { danhMuc = d }.font(.headline).padding(.horizontal, 22).padding(.vertical, 12).background(danhMuc == d ? Color.red : Color.white).foregroundStyle(danhMuc == d ? .white : .primary).clipShape(Capsule()).shadow(color: .black.opacity(0.08), radius: 5) } } } }
+    private func xaoTron() { thuTuXaoTron = kho.duLieu.videos.map(\.id).shuffled() }
+    private func xaoTronNeuCan() {
+        let ids = Set(kho.duLieu.videos.map(\.id))
+        let cu = thuTuXaoTron.filter { ids.contains($0) }
+        let moi = kho.duLieu.videos.map(\.id).filter { !cu.contains($0) }.shuffled()
+        thuTuXaoTron = cu + moi
+    }
     private func mo(_ v: VideoTreEm) { if kho.duocPhepXem() { videoDangPhat = v } else { baoHetGio = true } }
 }
 
@@ -66,8 +79,12 @@ struct TheVideo: View {
 struct AnhThumbnail: View {
     @EnvironmentObject var kho: KhoDuLieu
     let video: VideoTreEm
-    var body: some View { Group { if video.loai == .youtube { AsyncImage(url: kho.urlThumbnail(video)) { p in if let image = p.image { image.resizable() } else { nen } } } else if let u = kho.urlThumbnail(video), let ui = UIImage(contentsOfFile: u.path) { Image(uiImage: ui).resizable() } else { nen } } }
-    private var nen: some View { ZStack { LinearGradient(colors: [.cyan, .blue], startPoint: .topLeading, endPoint: .bottomTrailing); Image(systemName: "play.fill").font(.system(size: 44)).foregroundStyle(.white) } }
+    @State private var image: UIImage?
+    var body: some View {
+        Group { if let image { Image(uiImage: image).resizable() } else { nen } }
+            .task(id: video.id) { image = await kho.anhThumbnail(video) }
+    }
+    private var nen: some View { ZStack { LinearGradient(colors: [.cyan, .blue], startPoint: .topLeading, endPoint: .bottomTrailing); ProgressView().tint(.white) } }
 }
 
 struct KhoaPhuHuynh: View {

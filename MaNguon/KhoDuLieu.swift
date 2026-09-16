@@ -14,12 +14,17 @@ final class KhoDuLieu: ObservableObject {
     private let tenTep = "BeXemVui.json"
     private var urlTep: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(tenTep) }
     private var thuMucThumbnail: URL {
-        let u = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("Thumbnails", isDirectory: true)
+        let u = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Thumbnails", isDirectory: true)
         try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
         return u
     }
 
-    init() { nap(); moLaiThuMuc() }
+    init() {
+        nap()
+        moLaiThuMuc()
+        if !duLieu.cauHinh.danhMuc.contains("Truyện cổ tích") { duLieu.cauHinh.danhMuc.append("Truyện cổ tích") }
+        Task { await napVideoMacDinh() }
+    }
 
     func nap() {
         guard let data = try? Data(contentsOf: urlTep), let d = try? JSONDecoder.chuan.decode(DuLieuUngDung.self, from: data) else { luu(); return }
@@ -68,10 +73,26 @@ final class KhoDuLieu: ObservableObject {
         guard let folder = thuMucDangChon, let ten = video.tenTep else { return nil }
         return folder.appendingPathComponent(ten)
     }
-    func urlThumbnail(_ video: VideoTreEm) -> URL? { video.loai == .local ? thuMucThumbnail.appendingPathComponent(video.id + ".jpg") : URL(string: video.thumbnailURL ?? "") }
+    func urlThumbnail(_ video: VideoTreEm) -> URL? {
+        if video.loai == .local { return thuMucThumbnail.appendingPathComponent("Local-" + video.id + ".jpg") }
+        guard let id = video.youtubeID else { return nil }
+        return thuMucThumbnail.appendingPathComponent("YouTube-" + id + ".jpg")
+    }
+
+    func anhThumbnail(_ video: VideoTreEm) async -> UIImage? {
+        guard let localURL = urlThumbnail(video) else { return nil }
+        if let image = UIImage(contentsOfFile: localURL.path) { return image }
+        guard video.loai == .youtube, let remote = URL(string: video.thumbnailURL ?? "") else { return nil }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: remote)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode), let image = UIImage(data: data) else { return nil }
+            try data.write(to: localURL, options: .atomic)
+            return image
+        } catch { return nil }
+    }
 
     private func taoThumbnailNeuCan(videoID: String, fileURL: URL) async {
-        let output = thuMucThumbnail.appendingPathComponent(videoID + ".jpg")
+        let output = thuMucThumbnail.appendingPathComponent("Local-" + videoID + ".jpg")
         guard !FileManager.default.fileExists(atPath: output.path) else { return }
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL)); generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 640, height: 360)
@@ -86,9 +107,25 @@ final class KhoDuLieu: ObservableObject {
         }
     }
 
+    private func napVideoMacDinh() async {
+        guard let url = Bundle.main.url(forResource: "VideoMacDinh", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let danhSach = try? JSONDecoder().decode([VideoMacDinh].self, from: data) else { return }
+        for item in danhSach {
+            guard let id = Self.layYouTubeID(item.link),
+                  !(duLieu.idsVideoMacDinhDaXoa ?? []).contains(id),
+                  !duLieu.videos.contains(where: { $0.youtubeID == id }) else { continue }
+            await themYouTubeNoiBo(link: item.link, danhMuc: item.danhMuc, hienThongBao: false)
+        }
+    }
+
     func themYouTube(link: String) async {
-        guard let id = Self.layYouTubeID(link) else { thongBao = "Link YouTube không hợp lệ."; return }
-        guard !duLieu.videos.contains(where: { $0.youtubeID == id }) else { thongBao = "Video này đã có trong thư viện."; return }
+        await themYouTubeNoiBo(link: link, danhMuc: "Khám phá", hienThongBao: true)
+    }
+
+    private func themYouTubeNoiBo(link: String, danhMuc: String, hienThongBao: Bool) async {
+        guard let id = Self.layYouTubeID(link) else { if hienThongBao { thongBao = "Link YouTube không hợp lệ." }; return }
+        guard !duLieu.videos.contains(where: { $0.youtubeID == id }) else { if hienThongBao { thongBao = "Video này đã có trong thư viện." }; return }
         var title = "Video YouTube", author = "YouTube"
         if let encoded = "https://www.youtube.com/watch?v=\(id)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: "https://www.youtube.com/oembed?url=\(encoded)&format=json"),
@@ -96,8 +133,10 @@ final class KhoDuLieu: ObservableObject {
            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             title = object["title"] as? String ?? title; author = object["author_name"] as? String ?? author
         }
-        let v = VideoTreEm(id: "yt-\(id)", loai: .youtube, tieuDe: title, kenh: author, tenTep: nil, youtubeID: id, thumbnailURL: "https://i.ytimg.com/vi/\(id)/hqdefault.jpg", thoiLuong: 0, danhMuc: "Khám phá", dangBat: true, ngayThem: Date())
-        duLieu.videos.insert(v, at: 0); thongBao = "Đã thêm video được duyệt."
+        let v = VideoTreEm(id: "yt-\(id)", loai: .youtube, tieuDe: title, kenh: author, tenTep: nil, youtubeID: id, thumbnailURL: "https://i.ytimg.com/vi/\(id)/hqdefault.jpg", thoiLuong: 0, danhMuc: danhMuc, dangBat: true, ngayThem: Date())
+        duLieu.videos.insert(v, at: 0)
+        _ = await anhThumbnail(v)
+        if hienThongBao { thongBao = "Đã thêm video được duyệt." }
     }
 
     static func layYouTubeID(_ text: String) -> String? {
@@ -107,7 +146,16 @@ final class KhoDuLieu: ObservableObject {
         return c.queryItems?.first(where: { $0.name == "v" })?.value
     }
 
-    func xoa(_ offsets: IndexSet) { duLieu.videos.remove(atOffsets: offsets) }
+    func xoa(_ offsets: IndexSet) {
+        var daXoa = duLieu.idsVideoMacDinhDaXoa ?? []
+        for index in offsets where duLieu.videos.indices.contains(index) {
+            let video = duLieu.videos[index]
+            if let id = video.youtubeID, !daXoa.contains(id) { daXoa.append(id) }
+            if let thumbnail = urlThumbnail(video) { try? FileManager.default.removeItem(at: thumbnail) }
+        }
+        duLieu.idsVideoMacDinhDaXoa = daXoa
+        duLieu.videos.remove(atOffsets: offsets)
+    }
     func ghiLuotXem(video: VideoTreEm, giay: Double) {
         duLieu.lichSu.insert(LuotXem(videoID: video.id, tieuDe: video.tieuDe, soGiay: giay), at: 0)
         duLieu.lichSu = Array(duLieu.lichSu.prefix(500))

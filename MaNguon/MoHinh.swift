@@ -33,7 +33,7 @@ struct CauHinhUngDung: Codable {
     var gioBatDau = 7
     var gioKetThuc = 21
     var soPhutNghi = 15
-    var danhMuc = ["Tất cả", "Học tập", "Âm nhạc", "Khám phá"]
+    var danhMuc = ["Tất cả", "Học tập", "Âm nhạc", "Khám phá", "Truyện cổ tích"]
 }
 
 struct DuLieuUngDung: Codable {
@@ -41,4 +41,10 @@ struct DuLieuUngDung: Codable {
     var lichSu: [LuotXem] = []
     var cauHinh = CauHinhUngDung()
     var bookmarkThuMuc: Data?
+    var idsVideoMacDinhDaXoa: [String]? = []
+}
+
+struct VideoMacDinh: Codable {
+    var link: String
+    var danhMuc: String
 }
