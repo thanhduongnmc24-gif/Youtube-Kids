@@ -1,0 +1,79 @@
+import SwiftUI
+
+struct ManHinhChinh: View {
+    @EnvironmentObject var kho: KhoDuLieu
+    @State private var danhMuc = "Tất cả"
+    @State private var timKiem = ""
+    @State private var videoDangPhat: VideoTreEm?
+    @State private var moKhoa = false
+    @State private var hienPin = false
+    @State private var baoHetGio = false
+    private let cot = [GridItem(.adaptive(minimum: 250), spacing: 22)]
+
+    var videos: [VideoTreEm] { kho.duLieu.videos.filter { $0.dangBat && (danhMuc == "Tất cả" || $0.danhMuc == danhMuc) && (timKiem.isEmpty || $0.tieuDe.localizedCaseInsensitiveContains(timKiem)) } }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                LinearGradient(colors: [Color(red: 0.92, green: 0.98, blue: 1), .white], startPoint: .top, endPoint: .bottom).ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 18) {
+                        thanhDau
+                        thanhDanhMuc
+                        if videos.isEmpty { VStack(spacing: 14) { Image(systemName: "play.rectangle").font(.system(size: 54)).foregroundStyle(.secondary); Text("Chưa có video").font(.title2.bold()); Text("Phụ huynh hãy chọn thư mục hoặc thêm video YouTube trong Cài đặt.").foregroundStyle(.secondary) }.padding(.top, 80) }
+                        LazyVGrid(columns: cot, spacing: 24) { ForEach(videos) { v in TheVideo(video: v).onTapGesture { mo(v) } } }
+                    }.padding(20)
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .sheet(item: $videoDangPhat) { ManHinhPhatVideo(video: $0).environmentObject(kho) }
+            .sheet(isPresented: $hienPin) { KhoaPhuHuynh { moKhoa = true; hienPin = false } }
+            .sheet(isPresented: $moKhoa) { NavigationStack { ManHinhCaiDat() } }
+            .alert("Đã đến giờ nghỉ", isPresented: $baoHetGio) { Button("Đã hiểu") {} } message: { Text("Bé đã hết thời gian xem hôm nay hoặc đang ngoài khung giờ được phép.") }
+            .task { await kho.quetVideoLocal() }
+        }
+    }
+
+    private var thanhDau: some View {
+        HStack(spacing: 14) {
+            ZStack { Circle().fill(.red); Image(systemName: "play.fill").foregroundStyle(.white).font(.title2) }.frame(width: 52, height: 52)
+            VStack(alignment: .leading, spacing: 0) { Text("BÉ XEM VUI").font(.title2.bold()).foregroundStyle(.red); Text("Xin chào, \(kho.duLieu.cauHinh.tenBe)!").foregroundStyle(.secondary) }
+            Spacer()
+            HStack { Image(systemName: "magnifyingglass"); TextField("Tìm video", text: $timKiem).frame(maxWidth: 180) }.padding(12).background(.white).clipShape(Capsule()).shadow(color: .black.opacity(0.08), radius: 8)
+            Button { hienPin = true } label: { Image(systemName: "lock.fill").font(.title2).padding(14).background(.yellow).clipShape(Circle()).foregroundStyle(.black) }
+        }
+    }
+    private var thanhDanhMuc: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 12) { ForEach(kho.duLieu.cauHinh.danhMuc, id: \.self) { d in Button(d) { danhMuc = d }.font(.headline).padding(.horizontal, 22).padding(.vertical, 12).background(danhMuc == d ? Color.red : Color.white).foregroundStyle(danhMuc == d ? .white : .primary).clipShape(Capsule()).shadow(color: .black.opacity(0.08), radius: 5) } } } }
+    private func mo(_ v: VideoTreEm) { if kho.duocPhepXem() { videoDangPhat = v } else { baoHetGio = true } }
+}
+
+struct TheVideo: View {
+    @EnvironmentObject var kho: KhoDuLieu
+    let video: VideoTreEm
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ZStack(alignment: .bottomTrailing) {
+                AnhThumbnail(video: video).aspectRatio(16/9, contentMode: .fill).frame(maxWidth: .infinity).clipped().clipShape(RoundedRectangle(cornerRadius: 20))
+                if video.thoiLuong > 0 { Text(dinhDang(video.thoiLuong)).font(.caption.bold()).padding(.horizontal, 7).padding(.vertical, 4).background(.black.opacity(0.75)).foregroundStyle(.white).clipShape(Capsule()).padding(9) }
+            }
+            Text(video.tieuDe).font(.headline).lineLimit(2)
+            HStack { Image(systemName: video.loai == .youtube ? "play.rectangle.fill" : "internaldrive.fill"); Text(video.kenh).lineLimit(1) }.font(.subheadline).foregroundStyle(.secondary)
+        }.contentShape(Rectangle())
+    }
+    private func dinhDang(_ s: Double) -> String { String(format: "%d:%02d", Int(s)/60, Int(s)%60) }
+}
+
+struct AnhThumbnail: View {
+    @EnvironmentObject var kho: KhoDuLieu
+    let video: VideoTreEm
+    var body: some View { Group { if video.loai == .youtube { AsyncImage(url: kho.urlThumbnail(video)) { p in if let image = p.image { image.resizable() } else { nen } } } else if let u = kho.urlThumbnail(video), let ui = UIImage(contentsOfFile: u.path) { Image(uiImage: ui).resizable() } else { nen } } }
+    private var nen: some View { ZStack { LinearGradient(colors: [.cyan, .blue], startPoint: .topLeading, endPoint: .bottomTrailing); Image(systemName: "play.fill").font(.system(size: 44)).foregroundStyle(.white) } }
+}
+
+struct KhoaPhuHuynh: View {
+    @EnvironmentObject var kho: KhoDuLieu
+    @Environment(\.dismiss) var dismiss
+    @State private var pin = ""; @State private var sai = false
+    let thanhCong: () -> Void
+    var body: some View { VStack(spacing: 22) { Image(systemName: "person.2.badge.key.fill").font(.system(size: 55)).foregroundStyle(.orange); Text("Khu vực phụ huynh").font(.title.bold()); SecureField("Nhập mã PIN", text: $pin).keyboardType(.numberPad).textFieldStyle(.roundedBorder).frame(maxWidth: 260); if sai { Text("Mã PIN chưa đúng").foregroundStyle(.red) }; Button("Mở cài đặt") { if pin == kho.duLieu.cauHinh.pin { thanhCong() } else { sai = true } }.buttonStyle(.borderedProminent); Button("Đóng") { dismiss() } }.padding(35).presentationDetents([.medium]) }
+}

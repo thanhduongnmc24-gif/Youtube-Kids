@@ -1,0 +1,49 @@
+name: BeXemVui
+options:
+  bundleIdPrefix: com.thanhduong
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    DEVELOPMENT_TEAM: ""
+targets:
+  BeXemVui:
+    type: application
+    platform: iOS
+    sources:
+      - MaNguon
+    resources:
+      - TaiNguyen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thanhduong.BeXemVui
+        PRODUCT_NAME: BeXemVui
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: BieuTuongUngDung
+        CODE_SIGN_STYLE: Manual
+    info:
+      path: MaNguon/Info.plist
+      properties:
+        CFBundleDisplayName: Bé Xem Vui
+        UILaunchScreen: {}
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+schemes:
+  BeXemVui:
+    build:
+      targets:
+        BeXemVui: all
+    run:
+      config: Debug
+    archive:
+      config: Release

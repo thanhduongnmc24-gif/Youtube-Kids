@@ -1,0 +1,105 @@
+name: Tao IPA chua ky
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "MaNguon/**"
+      - "TaiNguyen/**"
+      - "project.yml"
+      - ".github/workflows/tao-ipa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tao-ipa:
+    runs-on: macos-15
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai XcodeGen
+        run: brew install xcodegen
+
+      - name: Tao bieu tuong neu co anh goc
+        run: |
+          ANH_GOC="TaiNguyen/BieuTuongGoc.png"
+          THU_MUC_ICON="TaiNguyen/HinhAnh.xcassets/BieuTuongUngDung.appiconset"
+          if [ ! -f "$ANH_GOC" ]; then
+            echo "Khong co BieuTuongGoc.png, dung icon mau trong du an."
+            exit 0
+          fi
+          W=$(sips -g pixelWidth "$ANH_GOC" | tail -n 1 | awk '{print $2}')
+          H=$(sips -g pixelHeight "$ANH_GOC" | tail -n 1 | awk '{print $2}')
+          [ "$W" = "$H" ] || { echo "Icon phai la anh vuong"; exit 1; }
+          mkdir -p "$THU_MUC_ICON" build/bieu-tuong
+          sips -s format png -z 1024 1024 "$ANH_GOC" --out build/bieu-tuong/icon.png
+          cp build/bieu-tuong/icon.png "$THU_MUC_ICON/BieuTuong-1024.png"
+
+      - name: Tao du an Xcode
+        run: xcodegen generate
+
+      - name: Kiem tra scheme
+        run: xcodebuild -list -project BeXemVui.xcodeproj
+
+      - name: Tao archive chua ky
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild archive \
+            -project BeXemVui.xcodeproj \
+            -scheme BeXemVui \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/BeXemVui.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" 2>&1 | tee build/xcodebuild.log
+
+      - name: Hien thi loi Swift
+        if: failure()
+        run: |
+          echo "===== CAC DONG LOI SWIFT ====="
+          grep -n -E "error:|fatal error:" build/xcodebuild.log || true
+
+      - name: Luu log build neu co loi
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XcodeBuild-Log
+          path: build/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Dong goi IPA
+        run: |
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R build/BeXemVui.xcarchive/Products/Applications/BeXemVui.app build/Payload/
+          cd build
+          zip -r -9 BeXemVui.ipa Payload
+
+      - name: Luu IPA vao Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BeXemVui-IPA
+          path: build/BeXemVui.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Tao ten ban phat hanh
+        id: ten_ban
+        run: echo "the=ban-$(date +'%Y.%m.%d-%H%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Dua IPA len Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ten_ban.outputs.the }}
+          name: Be Xem Vui ${{ steps.ten_ban.outputs.the }}
+          body: "IPA chua ky. Hay ky bang ESign truoc khi cai len iPhone/iPad."
+          files: build/BeXemVui.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

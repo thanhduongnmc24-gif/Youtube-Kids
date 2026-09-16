@@ -1,0 +1,14 @@
+# Bé Xem Vui v6.0
+
+Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
+
+- Chọn thư mục video local MP4/MOV/M4V.
+- Tự tạo thumbnail từ khung hình tại giây thứ 2.
+- Thêm từng liên kết YouTube đã được phụ huynh duyệt.
+- Tự lấy tiêu đề, tên kênh và thumbnail YouTube.
+- PIN phụ huynh, giới hạn phút mỗi ngày, khung giờ xem và lịch sử.
+
+PIN mặc định: `1234`.
+
+## Tạo IPA
+Đưa mã nguồn lên GitHub, chạy workflow **Tạo IPA chưa ký**, tải artifact rồi ký bằng công cụ phù hợp.
