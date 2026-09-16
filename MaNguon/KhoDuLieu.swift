@@ -12,6 +12,7 @@ final class KhoDuLieu: ObservableObject {
     @Published private(set) var nghiDen: Date?
     private var dangNap = false
     private let tenTep = "BeXemVui.json"
+    private let phienBanVideoMacDinh = 1
     private var urlTep: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(tenTep) }
     private var thuMucThumbnail: URL {
         let u = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Thumbnails", isDirectory: true)
@@ -23,7 +24,7 @@ final class KhoDuLieu: ObservableObject {
         nap()
         moLaiThuMuc()
         if !duLieu.cauHinh.danhMuc.contains("Truyện cổ tích") { duLieu.cauHinh.danhMuc.append("Truyện cổ tích") }
-        Task { await napVideoMacDinh() }
+        Task { await dongBoVideoMacDinh(hienThongBao: false) }
     }
 
     func nap() {
@@ -107,16 +108,37 @@ final class KhoDuLieu: ObservableObject {
         }
     }
 
-    private func napVideoMacDinh() async {
-        guard let url = Bundle.main.url(forResource: "VideoMacDinh", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let danhSach = try? JSONDecoder().decode([VideoMacDinh].self, from: data) else { return }
+    func dongBoVideoMacDinh(hienThongBao: Bool = true) async {
+        let danhSach: [VideoMacDinh]
+        if let url = Bundle.main.url(forResource: "VideoMacDinh", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let tuTep = try? JSONDecoder().decode([VideoMacDinh].self, from: data) {
+            danhSach = tuTep
+        } else {
+            danhSach = [
+                VideoMacDinh(link: "https://youtu.be/-zfd3yX_rN8", danhMuc: "Truyện cổ tích"),
+                VideoMacDinh(link: "https://youtu.be/74sXo5z4NY4", danhMuc: "Truyện cổ tích")
+            ]
+            if hienThongBao { thongBao = "Không tìm thấy VideoMacDinh.json. Ứng dụng đang dùng danh sách dự phòng tích hợp sẵn." }
+        }
+
+        var soThem = 0
+        let boQuaDaXoa = duLieu.phienBanVideoMacDinhDaNap == phienBanVideoMacDinh
         for item in danhSach {
             guard let id = Self.layYouTubeID(item.link),
-                  !(duLieu.idsVideoMacDinhDaXoa ?? []).contains(id),
+                  !(boQuaDaXoa && (duLieu.idsVideoMacDinhDaXoa ?? []).contains(id)),
                   !duLieu.videos.contains(where: { $0.youtubeID == id }) else { continue }
             await themYouTubeNoiBo(link: item.link, danhMuc: item.danhMuc, hienThongBao: false)
+            if duLieu.videos.contains(where: { $0.youtubeID == id }) { soThem += 1 }
         }
+        duLieu.phienBanVideoMacDinhDaNap = phienBanVideoMacDinh
+        if hienThongBao && thongBao == nil { thongBao = "Đã đồng bộ \(soThem) video mặc định mới." }
+    }
+
+    func khoiPhucVideoMacDinh() async {
+        duLieu.idsVideoMacDinhDaXoa = []
+        duLieu.phienBanVideoMacDinhDaNap = nil
+        await dongBoVideoMacDinh(hienThongBao: true)
     }
 
     func themYouTube(link: String) async {

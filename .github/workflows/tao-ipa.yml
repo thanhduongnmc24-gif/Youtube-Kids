@@ -23,20 +23,17 @@ jobs:
       - name: Cai XcodeGen
         run: brew install xcodegen
 
-      - name: Tao bieu tuong neu co anh goc
+      - name: Kiem tra tai nguyen bat buoc
         run: |
-          ANH_GOC="TaiNguyen/BieuTuongGoc.png"
-          THU_MUC_ICON="TaiNguyen/HinhAnh.xcassets/BieuTuongUngDung.appiconset"
-          if [ ! -f "$ANH_GOC" ]; then
-            echo "Khong co BieuTuongGoc.png, dung icon mau trong du an."
-            exit 0
-          fi
-          W=$(sips -g pixelWidth "$ANH_GOC" | tail -n 1 | awk '{print $2}')
-          H=$(sips -g pixelHeight "$ANH_GOC" | tail -n 1 | awk '{print $2}')
-          [ "$W" = "$H" ] || { echo "Icon phai la anh vuong"; exit 1; }
-          mkdir -p "$THU_MUC_ICON" build/bieu-tuong
-          sips -s format png -z 1024 1024 "$ANH_GOC" --out build/bieu-tuong/icon.png
-          cp build/bieu-tuong/icon.png "$THU_MUC_ICON/BieuTuong-1024.png"
+          ICON="TaiNguyen/HinhAnh.xcassets/BieuTuongUngDung.appiconset/BieuTuong-1024.png"
+          JSON="TaiNguyen/VideoMacDinh.json"
+          test -f "$ICON" || { echo "Thieu icon: $ICON"; exit 1; }
+          test -f "$JSON" || { echo "Thieu danh sach video: $JSON"; exit 1; }
+          W=$(sips -g pixelWidth "$ICON" | tail -n 1 | awk '{print $2}')
+          H=$(sips -g pixelHeight "$ICON" | tail -n 1 | awk '{print $2}')
+          [ "$W" = "1024" ] && [ "$H" = "1024" ] || { echo "Icon phai dung 1024x1024"; exit 1; }
+          python3 -m json.tool "$JSON" > /dev/null
+          echo "Icon va VideoMacDinh.json hop le."
 
       - name: Tao du an Xcode
         run: xcodegen generate
@@ -73,6 +70,14 @@ jobs:
           path: build/xcodebuild.log
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Kiem tra tai nguyen trong app
+        run: |
+          APP="build/BeXemVui.xcarchive/Products/Applications/BeXemVui.app"
+          test -f "$APP/VideoMacDinh.json" || { echo "VideoMacDinh.json khong co trong app bundle"; find "$APP" -maxdepth 2 -type f; exit 1; }
+          test -f "$APP/Assets.car" || { echo "Assets.car khong ton tai, icon chua duoc bien dich"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist"
 
       - name: Dong goi IPA
         run: |

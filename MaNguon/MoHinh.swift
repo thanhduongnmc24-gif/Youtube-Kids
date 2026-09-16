@@ -42,6 +42,7 @@ struct DuLieuUngDung: Codable {
     var cauHinh = CauHinhUngDung()
     var bookmarkThuMuc: Data?
     var idsVideoMacDinhDaXoa: [String]? = []
+    var phienBanVideoMacDinhDaNap: Int?
 }
 
 struct VideoMacDinh: Codable {

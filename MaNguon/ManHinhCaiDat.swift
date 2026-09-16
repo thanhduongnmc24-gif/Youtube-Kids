@@ -16,6 +16,17 @@ struct ManHinhCaiDat: View {
                 if kho.dangQuet { ProgressView("Đang tạo thumbnail tại giây thứ 2...") }
                 Text("Hỗ trợ MP4, MOV và M4V. Ứng dụng tự lấy khung hình tại giây thứ 2; video ngắn sẽ dùng khung hình đầu.").font(.caption).foregroundStyle(.secondary)
             }
+            Section("Video mặc định") {
+                Button { Task { await kho.dongBoVideoMacDinh() } } label: {
+                    Label("Đồng bộ video mặc định", systemImage: "arrow.triangle.2.circlepath")
+                }
+                Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
+                    Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
+                }
+                Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.json. Nếu tài nguyên bị thiếu, ứng dụng vẫn dùng hai video dự phòng tích hợp sẵn.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("Thêm video YouTube được duyệt") {
                 TextField("Dán link video YouTube", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled()
                 Button { dangThem = true; Task { await kho.themYouTube(link: link); link = ""; dangThem = false } } label: { Label("Thêm vào thư viện", systemImage: "plus.circle.fill") }.disabled(link.isEmpty || dangThem)

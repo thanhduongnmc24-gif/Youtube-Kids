@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.4
+# Bé Xem Vui v6.5
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -40,3 +40,11 @@ PIN mặc định: `1234`.
 
 ## Tự thêm video mặc định
 Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `danhMuc`.
+
+
+## Bản v6.5
+- Sửa nạp video mặc định: có danh sách dự phòng trong Swift, không còn thất bại im lặng khi thiếu JSON.
+- Thêm nút Đồng bộ và Khôi phục video mặc định.
+- Bỏ hoàn toàn bước workflow có thể ghi đè icon.
+- Workflow kiểm tra icon 1024x1024, JSON, Assets.car và VideoMacDinh.json trong app bundle.
+- Đặt MARKETING_VERSION 6.5 và CURRENT_PROJECT_VERSION 65.
