@@ -1,6 +1,6 @@
 import SwiftUI
 import AVKit
-import WebKit
+import YouTubeiOSPlayerHelper
 
 struct ManHinhPhatVideo: View {
     @EnvironmentObject var kho: KhoDuLieu
@@ -26,83 +26,55 @@ struct TrinhPhatLocal: View {
 struct TrinhPhatYouTube: UIViewRepresentable {
     let id: String
 
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        config.allowsAirPlayForMediaPlayback = true
-        config.allowsPictureInPictureMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
-
-        let preferences = WKWebpagePreferences()
-        preferences.allowsContentJavaScript = true
-        config.defaultWebpagePreferences = preferences
-
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        webView.scrollView.isScrollEnabled = false
-        webView.scrollView.bounces = false
-        webView.backgroundColor = .black
-        webView.isOpaque = true
-
-        let html = """
-        <!doctype html>
-        <html>
-        <head>
-            <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-            <style>
-                html, body {
-                    margin: 0;
-                    padding: 0;
-                    width: 100%;
-                    height: 100%;
-                    overflow: hidden;
-                    background: #000;
-                }
-                iframe {
-                    position: absolute;
-                    inset: 0;
-                    width: 100%;
-                    height: 100%;
-                    border: 0;
-                }
-            </style>
-        </head>
-        <body>
-            <iframe
-                src="https://www.youtube.com/embed/\(id)?playsinline=1&rel=0&autoplay=1&controls=1&iv_load_policy=3"
-                title="YouTube video player"
-                frameborder="0"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen>
-            </iframe>
-        </body>
-        </html>
-        """
-
-        var request = URLRequest(url: URL(string: "https://www.youtube.com")!)
-        request.setValue("https://www.youtube.com/", forHTTPHeaderField: "Referer")
-        webView.loadHTMLString(html, baseURL: request.url)
-        return webView
+    func makeUIView(context: Context) -> YTPlayerView {
+        let playerView = YTPlayerView(frame: .zero)
+        playerView.backgroundColor = .black
+        playerView.delegate = context.coordinator
+        playerView.load(
+            withVideoId: id,
+            playerVars: [
+                "playsinline": 1,
+                "autoplay": 1,
+                "controls": 1,
+                "rel": 0,
+                "iv_load_policy": 3,
+                "modestbranding": 1,
+                "origin": "https://www.youtube.com"
+            ]
+        )
+        return playerView
     }
 
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    func updateUIView(_ uiView: YTPlayerView, context: Context) {
+        guard context.coordinator.videoID != id else { return }
+        context.coordinator.videoID = id
+        uiView.load(
+            withVideoId: id,
+            playerVars: [
+                "playsinline": 1,
+                "autoplay": 1,
+                "controls": 1,
+                "rel": 0,
+                "iv_load_policy": 3,
+                "modestbranding": 1,
+                "origin": "https://www.youtube.com"
+            ]
+        )
+    }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(videoID: id)
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
-        func webView(
-            _ webView: WKWebView,
-            decidePolicyFor navigationAction: WKNavigationAction,
-            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-        ) {
-            if navigationAction.navigationType == .linkActivated {
-                decisionHandler(.cancel)
-                return
-            }
-            decisionHandler(.allow)
+    final class Coordinator: NSObject, YTPlayerViewDelegate {
+        var videoID: String
+
+        init(videoID: String) {
+            self.videoID = videoID
+        }
+
+        func playerViewDidBecomeReady(_ playerView: YTPlayerView) {
+            playerView.playVideo()
         }
     }
 }

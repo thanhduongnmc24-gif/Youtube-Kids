@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: com.thanhduong
   deploymentTarget:
     iOS: "16.0"
+packages:
+  YouTubeiOSPlayerHelper:
+    url: https://github.com/youtube/youtube-ios-player-helper.git
+    from: 1.0.4
 settings:
   base:
     SWIFT_VERSION: 5.0
@@ -15,6 +19,8 @@ targets:
       - MaNguon
     resources:
       - TaiNguyen
+    dependencies:
+      - package: YouTubeiOSPlayerHelper
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.thanhduong.BeXemVui
