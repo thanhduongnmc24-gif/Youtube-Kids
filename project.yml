@@ -14,7 +14,9 @@ targets:
     sources:
       - MaNguon
     resources:
-      - TaiNguyen
+      - path: TaiNguyen/HinhAnh.xcassets
+      - path: TaiNguyen/VideoMacDinh.json
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.thanhduong.BeXemVui
@@ -22,8 +24,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: BieuTuongUngDung
         CODE_SIGN_STYLE: Manual
-        MARKETING_VERSION: 6.6
-        CURRENT_PROJECT_VERSION: 66
+        MARKETING_VERSION: 6.7
+        CURRENT_PROJECT_VERSION: 67
     info:
       path: MaNguon/Info.plist
       properties:

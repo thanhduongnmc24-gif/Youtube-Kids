@@ -82,8 +82,10 @@ jobs:
       - name: Kiem tra tai nguyen trong app
         run: |
           APP="build/BeXemVui.xcarchive/Products/Applications/BeXemVui.app"
-          test -f "$APP/VideoMacDinh.json" || { echo "VideoMacDinh.json khong co trong app bundle"; find "$APP" -maxdepth 2 -type f; exit 1; }
-          test -f "$APP/Assets.car" || { echo "Assets.car khong ton tai, icon chua duoc bien dich"; exit 1; }
+          JSON_TRONG_APP=$(find "$APP" -name "VideoMacDinh.json" -type f | head -n 1)
+          test -n "$JSON_TRONG_APP" || { echo "VideoMacDinh.json khong co trong app bundle"; find "$APP" -maxdepth 3 -type f; exit 1; }
+          echo "Da tim thay: $JSON_TRONG_APP"
+          test -f "$APP/Assets.car" || { echo "Assets.car khong ton tai, icon chua duoc bien dich"; find "$APP" -maxdepth 3 -type f; exit 1; }
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist"
 
