@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.8
+# Bé Xem Vui v6.9
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -66,3 +66,10 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Sửa đúng cú pháp XcodeGen: đưa JSON và asset catalog vào `sources` với `buildPhase: resources`.
 - Workflow kiểm tra trực tiếp file project.pbxproj trước khi archive.
 - Tăng phiên bản lên 6.8, build 68.
+
+
+## Bản v6.9
+- Thêm Picker chọn danh mục khi phụ huynh thêm video YouTube thủ công.
+- Ghi nhớ danh mục được chọn gần nhất bằng AppStorage.
+- Nút thêm hiển thị rõ danh mục đích.
+- Không xóa nội dung link nếu thao tác thêm thất bại.

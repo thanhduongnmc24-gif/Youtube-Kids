@@ -7,6 +7,7 @@ struct ManHinhCaiDat: View {
     @State private var chonThuMuc = false
     @State private var link = ""
     @State private var dangThem = false
+    @AppStorage("DanhMucThemGanNhat") private var danhMucDangChon = "Khám phá"
     var body: some View {
         Form {
             Section("Thư mục video local") {
@@ -28,8 +29,31 @@ struct ManHinhCaiDat: View {
                     .foregroundStyle(.secondary)
             }
             Section("Thêm video YouTube được duyệt") {
-                TextField("Dán link video YouTube", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled()
-                Button { dangThem = true; Task { await kho.themYouTube(link: link); link = ""; dangThem = false } } label: { Label("Thêm vào thư viện", systemImage: "plus.circle.fill") }.disabled(link.isEmpty || dangThem)
+                TextField("Dán link video YouTube", text: $link)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+
+                Picker("Danh mục", selection: $danhMucDangChon) {
+                    ForEach(kho.duLieu.cauHinh.danhMuc.filter { $0 != "Tất cả" }, id: \.self) { danhMuc in
+                        Text(danhMuc).tag(danhMuc)
+                    }
+                }
+
+                Button {
+                    let linkCanThem = link
+                    let danhMucCanThem = danhMucDangChon
+                    dangThem = true
+                    Task {
+                        await kho.themYouTube(link: linkCanThem, danhMuc: danhMucCanThem)
+                        if kho.thongBao == "Đã thêm video được duyệt." { link = "" }
+                        dangThem = false
+                    }
+                } label: {
+                    Label("Thêm vào \(danhMucDangChon)", systemImage: "plus.circle.fill")
+                }
+                .disabled(link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dangThem)
+
                 if dangThem { ProgressView("Đang lấy tiêu đề và hình thu nhỏ...") }
             }
             Section("Kiểm soát thời gian") {

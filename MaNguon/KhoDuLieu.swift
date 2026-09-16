@@ -141,8 +141,9 @@ final class KhoDuLieu: ObservableObject {
         await dongBoVideoMacDinh(hienThongBao: true)
     }
 
-    func themYouTube(link: String) async {
-        await themYouTubeNoiBo(link: link, danhMuc: "Khám phá", hienThongBao: true)
+    func themYouTube(link: String, danhMuc: String) async {
+        let muc = duLieu.cauHinh.danhMuc.contains(danhMuc) && danhMuc != "Tất cả" ? danhMuc : "Khám phá"
+        await themYouTubeNoiBo(link: link, danhMuc: muc, hienThongBao: true)
     }
 
     private func themYouTubeNoiBo(link: String, danhMuc: String, hienThongBao: Bool) async {
