@@ -25,17 +25,84 @@ struct TrinhPhatLocal: View {
 
 struct TrinhPhatYouTube: UIViewRepresentable {
     let id: String
+
     func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration(); config.allowsInlineMediaPlayback = true; config.mediaTypesRequiringUserActionForPlayback = []
-        let web = WKWebView(frame: .zero, configuration: config); web.scrollView.isScrollEnabled = false; web.isOpaque = false; web.navigationDelegate = context.coordinator
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.allowsAirPlayForMediaPlayback = true
+        config.allowsPictureInPictureMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+
+        let preferences = WKWebpagePreferences()
+        preferences.allowsContentJavaScript = true
+        config.defaultWebpagePreferences = preferences
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.bounces = false
+        webView.backgroundColor = .black
+        webView.isOpaque = true
+
         let html = """
-        <!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1'><style>html,body,#p{margin:0;width:100%;height:100%;background:#000;overflow:hidden}</style></head><body><div id='p'></div><script src='https://www.youtube.com/iframe_api'></script><script>function onYouTubeIframeAPIReady(){new YT.Player('p',{videoId:'\(id)',playerVars:{autoplay:1,playsinline:1,rel:0,modestbranding:1,iv_load_policy:3}})}</script></body></html>
+        <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+            <style>
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                    background: #000;
+                }
+                iframe {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: 0;
+                }
+            </style>
+        </head>
+        <body>
+            <iframe
+                src="https://www.youtube.com/embed/\(id)?playsinline=1&rel=0&autoplay=1&controls=1&iv_load_policy=3"
+                title="YouTube video player"
+                frameborder="0"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen>
+            </iframe>
+        </body>
+        </html>
         """
-        web.loadHTMLString(html, baseURL: URL(string: "https://www.youtube.com")); return web
+
+        var request = URLRequest(url: URL(string: "https://www.youtube.com")!)
+        request.setValue("https://www.youtube.com/", forHTTPHeaderField: "Referer")
+        webView.loadHTMLString(html, baseURL: request.url)
+        return webView
     }
+
     func updateUIView(_ uiView: WKWebView, context: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     final class Coordinator: NSObject, WKNavigationDelegate {
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) { decisionHandler(navigationAction.navigationType == .linkActivated ? .cancel : .allow) }
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            if navigationAction.navigationType == .linkActivated {
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
     }
 }

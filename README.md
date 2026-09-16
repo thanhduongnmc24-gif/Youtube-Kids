@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.0
+# Bé Xem Vui v6.1
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -12,3 +12,6 @@ PIN mặc định: `1234`.
 
 ## Tạo IPA
 Đưa mã nguồn lên GitHub, chạy workflow **Tạo IPA chưa ký**, tải artifact rồi ký bằng công cụ phù hợp.
+
+## Bản v6.1
+- Sửa lỗi YouTube 152-4 bằng iframe trực tiếp với nguồn YouTube hợp lệ và referrer policy.
