@@ -29,6 +29,15 @@ struct ManHinhCaiDat: View {
                 Stepper("Nghỉ \(kho.duLieu.cauHinh.soPhutNghi) phút", value: $kho.duLieu.cauHinh.soPhutNghi, in: 5...60, step: 5)
                 LabeledContent("Đã xem hôm nay", value: "\(Int(kho.soGiayDaXemHomNay()/60)) phút")
             }
+            Section("Trang phát YouTube HTTPS") {
+                TextField("https://ten-github.github.io/ten-repo/player.html", text: Binding(get: { kho.duLieu.cauHinh.urlTrangPhat ?? "" }, set: { kho.duLieu.cauHinh.urlTrangPhat = $0 }))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                Text("Sau khi bật GitHub Pages, dán địa chỉ player.html vào đây. Ứng dụng sẽ tự thêm mã video vào tham số v.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("Hồ sơ và bảo vệ") {
                 TextField("Tên bé", text: $kho.duLieu.cauHinh.tenBe)
                 SecureField("Mã PIN phụ huynh", text: $kho.duLieu.cauHinh.pin).keyboardType(.numberPad)

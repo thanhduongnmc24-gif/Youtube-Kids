@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.2
+# Bé Xem Vui v6.3
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -18,3 +18,14 @@ PIN mặc định: `1234`.
 
 ## Bản v6.2
 - Thử nghiệm trình phát bằng thư viện YouTube iOS Player Helper 1.0.4 qua Swift Package Manager.
+
+## Bản v6.3
+- Phát YouTube qua trang HTTPS trung gian trong `docs/player.html`.
+- Tự triển khai trang phát bằng GitHub Pages.
+- Nhập URL `player.html` trong Cài đặt phụ huynh.
+
+## Bật trang phát HTTPS
+1. Đẩy mã nguồn lên GitHub.
+2. Vào Settings > Pages > Source, chọn GitHub Actions.
+3. Chạy workflow `Trien khai trang phat HTTPS`.
+4. Lấy URL Pages và thêm `/player.html`, sau đó dán vào ứng dụng.

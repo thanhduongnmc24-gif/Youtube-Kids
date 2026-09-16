@@ -27,6 +27,7 @@ struct LuotXem: Identifiable, Codable {
 struct CauHinhUngDung: Codable {
     var tenBe = "Bé"
     var pin = "1234"
+    var urlTrangPhat: String?
     var gioiHanPhutMoiNgay = 60
     var gioiHanVideoMoiLuot = 10
     var gioBatDau = 7

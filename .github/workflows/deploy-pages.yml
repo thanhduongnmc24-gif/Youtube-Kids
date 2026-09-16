@@ -1,0 +1,33 @@
+name: Trien khai trang phat HTTPS
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+      - name: Cau hinh GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Dong goi trang phat
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Trien khai
+        id: deployment
+        uses: actions/deploy-pages@v4

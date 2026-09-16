@@ -1,6 +1,6 @@
 import SwiftUI
 import AVKit
-import YouTubeiOSPlayerHelper
+import WebKit
 
 struct ManHinhPhatVideo: View {
     @EnvironmentObject var kho: KhoDuLieu
@@ -11,7 +11,7 @@ struct ManHinhPhatVideo: View {
         ZStack(alignment: .topTrailing) {
             Color.black.ignoresSafeArea()
             if video.loai == .local, let url = kho.urlVideoLocal(video) { TrinhPhatLocal(url: url) }
-            else if let id = video.youtubeID { TrinhPhatYouTube(id: id) }
+            else if let id = video.youtubeID { TrinhPhatYouTube(id: id, urlTrangPhat: kho.duLieu.cauHinh.urlTrangPhat ?? "") }
             Button { dismiss() } label: { Image(systemName: "xmark").font(.title2.bold()).padding(14).background(.black.opacity(0.65)).foregroundStyle(.white).clipShape(Circle()) }.padding()
         }.onDisappear { kho.ghiLuotXem(video: video, giay: max(1, Date().timeIntervalSince(batDau))) }
     }
@@ -25,56 +25,77 @@ struct TrinhPhatLocal: View {
 
 struct TrinhPhatYouTube: UIViewRepresentable {
     let id: String
+    let urlTrangPhat: String
 
-    func makeUIView(context: Context) -> YTPlayerView {
-        let playerView = YTPlayerView(frame: .zero)
-        playerView.backgroundColor = .black
-        playerView.delegate = context.coordinator
-        playerView.load(
-            withVideoId: id,
-            playerVars: [
-                "playsinline": 1,
-                "autoplay": 1,
-                "controls": 1,
-                "rel": 0,
-                "iv_load_policy": 3,
-                "modestbranding": 1,
-                "origin": "https://www.youtube.com"
-            ]
-        )
-        return playerView
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.allowsAirPlayForMediaPlayback = true
+        config.allowsPictureInPictureMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator
+        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.bounces = false
+        webView.backgroundColor = .black
+        webView.isOpaque = true
+        taiVideo(id: id, trong: webView)
+        return webView
     }
 
-    func updateUIView(_ uiView: YTPlayerView, context: Context) {
-        guard context.coordinator.videoID != id else { return }
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        guard context.coordinator.videoID != id || context.coordinator.urlTrangPhat != urlTrangPhat else { return }
         context.coordinator.videoID = id
-        uiView.load(
-            withVideoId: id,
-            playerVars: [
-                "playsinline": 1,
-                "autoplay": 1,
-                "controls": 1,
-                "rel": 0,
-                "iv_load_policy": 3,
-                "modestbranding": 1,
-                "origin": "https://www.youtube.com"
-            ]
-        )
+        context.coordinator.urlTrangPhat = urlTrangPhat
+        taiVideo(id: id, trong: webView)
+    }
+
+    private func taiVideo(id: String, trong webView: WKWebView) {
+        let goc = urlTrangPhat.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !goc.isEmpty, var components = URLComponents(string: goc) else {
+            webView.loadHTMLString("<html><body style='background:#000;color:#fff;font:20px -apple-system;text-align:center;padding-top:25%'>Phụ huynh chưa nhập URL trang phát HTTPS trong Cài đặt.</body></html>", baseURL: nil)
+            return
+        }
+        var items = components.queryItems ?? []
+        items.removeAll { $0.name == "v" }
+        items.append(URLQueryItem(name: "v", value: id))
+        components.queryItems = items
+        guard let url = components.url, url.scheme == "https" else {
+            webView.loadHTMLString("<html><body style='background:#000;color:#fff;font:20px -apple-system;text-align:center;padding-top:25%'>URL trang phát phải bắt đầu bằng HTTPS.</body></html>", baseURL: nil)
+            return
+        }
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        webView.load(request)
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(videoID: id)
+        Coordinator(videoID: id, urlTrangPhat: urlTrangPhat)
     }
 
-    final class Coordinator: NSObject, YTPlayerViewDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         var videoID: String
+        var urlTrangPhat: String
 
-        init(videoID: String) {
+        init(videoID: String, urlTrangPhat: String) {
             self.videoID = videoID
+            self.urlTrangPhat = urlTrangPhat
         }
 
-        func playerViewDidBecomeReady(_ playerView: YTPlayerView) {
-            playerView.playVideo()
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            guard let url = navigationAction.request.url else {
+                decisionHandler(.cancel)
+                return
+            }
+            let host = url.host?.lowercased() ?? ""
+            let duocPhep = navigationAction.navigationType != .linkActivated || host.contains("youtube.com") || host.contains("youtube-nocookie.com")
+            decisionHandler(duocPhep ? .allow : .cancel)
         }
     }
 }

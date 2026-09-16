@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Bé Xem Vui Player</title>
+  <style>
+    html, body, #player { width:100%; height:100%; margin:0; padding:0; overflow:hidden; background:#000; }
+    iframe { width:100%; height:100%; border:0; }
+    #message { color:#fff; font:20px -apple-system,system-ui,sans-serif; text-align:center; padding-top:25vh; }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+  <script>
+    const videoId = new URLSearchParams(location.search).get('v');
+    const valid = /^[A-Za-z0-9_-]{11}$/.test(videoId || '');
+    if (!valid) {
+      document.getElementById('player').innerHTML = '<div id="message">Liên kết video không hợp lệ.</div>';
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId) + '?autoplay=1&playsinline=1&controls=1&rel=0&iv_load_policy=3';
+      iframe.title = 'YouTube video player';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      document.getElementById('player').appendChild(iframe);
+    }
+  </script>
+</body>
+</html>
