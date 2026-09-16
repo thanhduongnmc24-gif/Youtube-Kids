@@ -1,4 +1,4 @@
-# Bé Xem Vui v6.5
+# Bé Xem Vui v6.6
 
 Ứng dụng SwiftUI iOS 16 giúp phụ huynh tạo thư viện video an toàn cho trẻ.
 
@@ -48,3 +48,9 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Bỏ hoàn toàn bước workflow có thể ghi đè icon.
 - Workflow kiểm tra icon 1024x1024, JSON, Assets.car và VideoMacDinh.json trong app bundle.
 - Đặt MARKETING_VERSION 6.5 và CURRENT_PROJECT_VERSION 65.
+
+
+## Bản v6.6
+- Chấp nhận icon PNG vuông với mọi kích thước.
+- GitHub Actions tự chuyển icon vuông về 1024x1024 trước khi build.
+- Chỉ báo lỗi khi icon không vuông hoặc không đọc được.

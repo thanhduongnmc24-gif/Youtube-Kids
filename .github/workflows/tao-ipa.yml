@@ -31,9 +31,17 @@ jobs:
           test -f "$JSON" || { echo "Thieu danh sach video: $JSON"; exit 1; }
           W=$(sips -g pixelWidth "$ICON" | tail -n 1 | awk '{print $2}')
           H=$(sips -g pixelHeight "$ICON" | tail -n 1 | awk '{print $2}')
-          [ "$W" = "1024" ] && [ "$H" = "1024" ] || { echo "Icon phai dung 1024x1024"; exit 1; }
+          [ -n "$W" ] && [ -n "$H" ] || { echo "Khong doc duoc kich thuoc icon"; exit 1; }
+          [ "$W" = "$H" ] || { echo "Icon phai la anh vuong. Kich thuoc hien tai: ${W}x${H}"; exit 1; }
+          if [ "$W" != "1024" ]; then
+            echo "Tu dong chuyen icon tu ${W}x${H} thanh 1024x1024..."
+            TMP_ICON="build/BieuTuong-1024.png"
+            mkdir -p build
+            sips -s format png -z 1024 1024 "$ICON" --out "$TMP_ICON"
+            cp "$TMP_ICON" "$ICON"
+          fi
           python3 -m json.tool "$JSON" > /dev/null
-          echo "Icon va VideoMacDinh.json hop le."
+          echo "Icon vuong hop le va da san sang o kich thuoc 1024x1024."
 
       - name: Tao du an Xcode
         run: xcodegen generate
