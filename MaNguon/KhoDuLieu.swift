@@ -189,7 +189,8 @@ final class KhoDuLieu: ObservableObject {
         if let range = giaTri.range(of: "http://"), !giaTri.hasPrefix("https://") {
             giaTri = String(giaTri[range.lowerBound...])
         }
-        if let dauKetThuc = giaTri.firstIndex(where: { $0 == " " || $0 == "<" || $0 == """ || $0 == "'" }) {
+        let kyTuKetThuc: Set<Character> = [" ", "<", "\"", "'"]
+        if let dauKetThuc = giaTri.firstIndex(where: { kyTuKetThuc.contains($0) }) {
             giaTri = String(giaTri[..<dauKetThuc])
         }
 

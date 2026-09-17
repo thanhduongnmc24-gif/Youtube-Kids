@@ -93,3 +93,9 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Khi chạm màn hình phát YouTube, video tạm dừng và hiện tối đa 10 thumbnail gợi ý.
 - Chạm thumbnail để phát ngay video được chọn hoặc chọn Xem tiếp.
 - Không chỉnh sửa hay thay thế file icon ứng dụng.
+
+
+## Bản v7.2
+- Sửa lỗi cú pháp chuỗi tại hàm nhận dạng YouTube ID.
+- Dùng `Set<Character>` để nhận biết khoảng trắng, thẻ HTML và dấu nháy an toàn.
+- Các lỗi dây chuyền về JSONEncoder, duocPhepXem và ghiLuotXem được loại bỏ sau khi parser đọc đầy đủ class.
