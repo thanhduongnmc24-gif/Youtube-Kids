@@ -132,8 +132,21 @@ struct ManHinhCaiDat: View {
         }
         .alert("Thông báo", isPresented: Binding(get: { kho.thongBao != nil }, set: { if !$0 { kho.thongBao = nil } })) { Button("OK") { kho.thongBao = nil } } message: { Text(kho.thongBao ?? "") }
     }
-}
 
+    private func doiMaPIN() {
+        let cu = String(pinCu.filter(\.isNumber).prefix(4))
+        let moi = String(pinMoi.filter(\.isNumber).prefix(4))
+        let xacNhan = String(pinXacNhan.filter(\.isNumber).prefix(4))
+        guard cu == kho.duLieu.cauHinh.pin else { kho.thongBao = "Mã PIN hiện tại chưa đúng."; return }
+        guard moi.count == 4 else { kho.thongBao = "Mã PIN mới phải gồm đúng 4 số."; return }
+        guard moi == xacNhan else { kho.thongBao = "Hai lần nhập mã PIN mới chưa khớp."; return }
+        kho.duLieu.cauHinh.pin = moi
+        pinCu = ""
+        pinMoi = ""
+        pinXacNhan = ""
+        kho.thongBao = "Đã đổi mã PIN phụ huynh."
+    }
+}
 
 struct TrinhChonFileTXT: UIViewControllerRepresentable {
     let hoanThanh: (URL?) -> Void

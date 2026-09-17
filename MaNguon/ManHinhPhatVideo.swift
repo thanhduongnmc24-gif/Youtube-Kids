@@ -22,6 +22,13 @@ struct ManHinhPhatVideo: View {
         }
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    let laVuotXuong = value.translation.height > 120 && abs(value.translation.height) > abs(value.translation.width)
+                    if laVuotXuong { dismiss() }
+                }
+        )
         .onDisappear { kho.ghiLuotXem(video: video, giay: max(1, Date().timeIntervalSince(batDau))) }
     }
 }

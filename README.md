@@ -130,3 +130,12 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Callback chọn, hủy và nhập file được xử lý rõ ràng.
 - Trình chọn thư mục video vẫn hoạt động độc lập.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v7.7
+- Chạm lại màn hình gợi ý để tiếp tục video và tự ẩn hàng thumbnail, bỏ nút Xem tiếp.
+- Vuốt xuống hơn 120 điểm để đóng trình phát.
+- Mở khóa phụ huynh tự bật bàn phím số, nhập đủ 4 số sẽ kiểm tra ngay.
+- Bỏ nút Mở cài đặt.
+- Thêm chức năng đổi mã PIN với mã cũ, mã mới và xác nhận.
+- Không thay đổi icon ứng dụng.

@@ -90,7 +90,58 @@ struct AnhThumbnail: View {
 struct KhoaPhuHuynh: View {
     @EnvironmentObject var kho: KhoDuLieu
     @Environment(\.dismiss) var dismiss
-    @State private var pin = ""; @State private var sai = false
+    @State private var pin = ""
+    @State private var sai = false
+    @FocusState private var dangNhapPIN: Bool
     let thanhCong: () -> Void
-    var body: some View { VStack(spacing: 22) { Image(systemName: "person.2.badge.key.fill").font(.system(size: 55)).foregroundStyle(.orange); Text("Khu vực phụ huynh").font(.title.bold()); SecureField("Nhập mã PIN", text: $pin).keyboardType(.numberPad).textFieldStyle(.roundedBorder).frame(maxWidth: 260); if sai { Text("Mã PIN chưa đúng").foregroundStyle(.red) }; Button("Mở cài đặt") { if pin == kho.duLieu.cauHinh.pin { thanhCong() } else { sai = true } }.buttonStyle(.borderedProminent); Button("Đóng") { dismiss() } }.padding(35).presentationDetents([.medium]) }
+
+    var body: some View {
+        VStack(spacing: 22) {
+            Image(systemName: "person.2.badge.key.fill")
+                .font(.system(size: 55))
+                .foregroundStyle(.orange)
+            Text("Nhập mã PIN phụ huynh")
+                .font(.title2.bold())
+
+            HStack(spacing: 14) {
+                ForEach(0..<4, id: \.self) { index in
+                    Circle()
+                        .fill(index < pin.count ? Color.indigo : Color.gray.opacity(0.25))
+                        .frame(width: 18, height: 18)
+                }
+            }
+
+            TextField("", text: $pin)
+                .keyboardType(.numberPad)
+                .textContentType(.oneTimeCode)
+                .focused($dangNhapPIN)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .onChange(of: pin) { giaTri in
+                    let chiSo = String(giaTri.filter(\.isNumber).prefix(4))
+                    if chiSo != giaTri { pin = chiSo; return }
+                    sai = false
+                    guard chiSo.count == 4 else { return }
+                    if chiSo == kho.duLieu.cauHinh.pin {
+                        dangNhapPIN = false
+                        thanhCong()
+                    } else {
+                        sai = true
+                        pin = ""
+                        dangNhapPIN = true
+                    }
+                }
+
+            if sai { Text("Mã PIN chưa đúng").foregroundStyle(.red) }
+            Button("Đóng") { dismiss() }
+        }
+        .padding(35)
+        .presentationDetents([.medium])
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                dangNhapPIN = true
+            }
+        }
+        .onTapGesture { dangNhapPIN = true }
+    }
 }

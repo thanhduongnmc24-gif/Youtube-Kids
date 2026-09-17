@@ -10,7 +10,6 @@
     #touch{position:fixed;inset:0;z-index:5;background:transparent}
     #panel{display:none;position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(0,0,0,.88);padding:12px 14px;color:#fff;font-family:-apple-system,system-ui,sans-serif}
     #panel.show{display:block}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.top h2{margin:0;font-size:17px}
-    #resume{border:0;border-radius:999px;padding:12px 20px;background:#fff;color:#111;font-weight:700;font-size:16px}
     #grid{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}.card{border:0;padding:0;background:#222;min-width:150px;width:150px;border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
     .card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.card span{display:block;color:#fff;padding:7px;text-align:left;font-weight:700;font-size:13px}
     #message{color:#fff;font:20px -apple-system,system-ui;text-align:center;padding-top:25vh}
@@ -18,7 +17,7 @@
 </head>
 <body>
   <div id="player"></div><div id="touch" aria-label="Tạm dừng"></div>
-  <section id="panel"><div class="top"><h2>Chọn video tiếp theo</h2><button id="resume">▶ Xem tiếp</button></div><div id="grid"></div></section>
+  <section id="panel"><div class="top"><h2>Chọn video tiếp theo</h2></div><div id="grid"></div></section>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     const q=new URLSearchParams(location.search), first=q.get('v')||'', valid=x=>/^[A-Za-z0-9_-]{11}$/.test(x||'');
@@ -31,8 +30,8 @@
     const panel=document.getElementById('panel'),touch=document.getElementById('touch'),grid=document.getElementById('grid');
     function showSuggestions(){if(player&&player.pauseVideo)player.pauseVideo();panel.classList.add('show');touch.style.display='none';}
     function resume(){panel.classList.remove('show');touch.style.display='block';if(player&&player.playVideo)player.playVideo();}
-    touch.addEventListener('click',showSuggestions);document.getElementById('resume').addEventListener('click',resume);
-    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=()=>{current=id;panel.classList.remove('show');touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
+    touch.addEventListener('click',showSuggestions);panel.addEventListener('click',resume);
+    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=e=>{e.stopPropagation();current=id;panel.classList.remove('show');touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
   </script>
 </body>
 </html>
