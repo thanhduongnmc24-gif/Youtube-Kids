@@ -31,7 +31,7 @@ struct ManHinhChinh: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .sheet(item: $videoDangPhat) { ManHinhPhatVideo(video: $0).environmentObject(kho) }
+            .fullScreenCover(item: $videoDangPhat) { ManHinhPhatVideo(video: $0).environmentObject(kho) }
             .sheet(isPresented: $hienPin) { KhoaPhuHuynh { moKhoa = true; hienPin = false } }
             .sheet(isPresented: $moKhoa) { NavigationStack { ManHinhCaiDat() } }
             .alert("Đã đến giờ nghỉ", isPresented: $baoHetGio) { Button("Đã hiểu") {} } message: { Text("Bé đã hết thời gian xem hôm nay hoặc đang ngoài khung giờ được phép.") }

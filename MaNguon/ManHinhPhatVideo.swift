@@ -13,7 +13,10 @@ struct ManHinhPhatVideo: View {
             if video.loai == .local, let url = kho.urlVideoLocal(video) { TrinhPhatLocal(url: url) }
             else if let id = video.youtubeID { TrinhPhatYouTube(id: id, urlTrangPhat: kho.duLieu.cauHinh.urlTrangPhat ?? "") }
             Button { dismiss() } label: { Image(systemName: "xmark").font(.title2.bold()).padding(14).background(.black.opacity(0.65)).foregroundStyle(.white).clipShape(Circle()) }.padding()
-        }.onDisappear { kho.ghiLuotXem(video: video, giay: max(1, Date().timeIntervalSince(batDau))) }
+        }
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
+        .onDisappear { kho.ghiLuotXem(video: video, giay: max(1, Date().timeIntervalSince(batDau))) }
     }
 }
 
