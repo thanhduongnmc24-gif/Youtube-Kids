@@ -115,3 +115,10 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Tự bóc Video ID từ link thường, Shorts, YouTube Kids, youtu.be, đoạn HTML và chuỗi chứa link.
 - Ví dụ link YouTube Kids tự lấy `ktlaDZUK4Ek`.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v7.5
+- Gộp hai fileImporter thành một trình chọn duy nhất để tránh xung đột trên iPad.
+- Chấp nhận đúng file `.txt`, kiểm tra UTF-8 và loại bỏ BOM.
+- Hiện trạng thái đang nhập và thông báo kết quả kể cả khi toàn bộ video đã tồn tại.
+- Không thay đổi icon ứng dụng.

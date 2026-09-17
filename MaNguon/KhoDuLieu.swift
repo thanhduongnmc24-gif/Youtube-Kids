@@ -184,13 +184,23 @@ final class KhoDuLieu: ObservableObject {
         let coQuyen = url.startAccessingSecurityScopedResource()
         defer { if coQuyen { url.stopAccessingSecurityScopedResource() } }
         do {
-            let noiDung = try String(contentsOf: url, encoding: .utf8)
+            guard url.pathExtension.lowercased() == "txt" else {
+                thongBao = "Vui lòng chọn đúng file có đuôi .txt."
+                return
+            }
+            let data = try Data(contentsOf: url)
+            guard var noiDung = String(data: data, encoding: .utf8) else {
+                thongBao = "File TXT phải dùng bảng mã UTF-8."
+                return
+            }
+            noiDung = noiDung.replacingOccurrences(of: "\u{FEFF}", with: "")
             let danhSach = tachDanhSachVideo(tu: noiDung)
             guard !danhSach.isEmpty else {
                 thongBao = "File TXT đang trống hoặc không đúng cấu trúc 2 dòng."
                 return
             }
             var soThem = 0
+            var soDaCo = 0
             var linkLoi: [String] = []
             for item in danhSach {
                 guard let id = Self.layYouTubeID(item.link) else {
@@ -201,14 +211,17 @@ final class KhoDuLieu: ObservableObject {
                 if muc != "Tất cả" && !duLieu.cauHinh.danhMuc.contains(muc) {
                     duLieu.cauHinh.danhMuc.append(muc)
                 }
-                if duLieu.videos.contains(where: { $0.youtubeID == id }) { continue }
+                if duLieu.videos.contains(where: { $0.youtubeID == id }) {
+                    soDaCo += 1
+                    continue
+                }
                 await themYouTubeNoiBo(link: id, danhMuc: muc, hienThongBao: false)
                 if duLieu.videos.contains(where: { $0.youtubeID == id }) { soThem += 1 }
             }
             if linkLoi.isEmpty {
-                thongBao = "Đã nhập \(danhSach.count) mục, thêm mới \(soThem) video."
+                thongBao = "Đã đọc \(danhSach.count) mục: thêm \(soThem), đã có \(soDaCo), lỗi 0."
             } else {
-                thongBao = "Đã nhập \(danhSach.count) mục, thêm \(soThem), lỗi \(linkLoi.count).\n\(linkLoi.prefix(5).joined(separator: "\n"))"
+                thongBao = "Đã đọc \(danhSach.count) mục: thêm \(soThem), đã có \(soDaCo), lỗi \(linkLoi.count).\n\(linkLoi.prefix(5).joined(separator: "\n"))"
             }
         } catch {
             thongBao = "Không đọc được file TXT: \(error.localizedDescription)"

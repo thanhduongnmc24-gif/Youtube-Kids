@@ -2,18 +2,28 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ManHinhCaiDat: View {
+    private enum LoaiTepDangChon {
+        case thuMucVideo
+        case danhSachTXT
+    }
     @EnvironmentObject var kho: KhoDuLieu
     @Environment(\.dismiss) var dismiss
-    @State private var chonThuMuc = false
+    @State private var hienTrinhChonTep = false
+    @State private var loaiTepDangChon: LoaiTepDangChon = .thuMucVideo
     @State private var link = ""
     @State private var dangThem = false
-    @State private var dangNhapTepVideo = false
+    @State private var dangNhapDanhSach = false
     @AppStorage("DanhMucThemGanNhat") private var danhMucDangChon = "Khám phá"
     var body: some View {
         Form {
             Section("Thư mục video local") {
                 LabeledContent("Thư mục", value: kho.thuMucDangChon?.lastPathComponent ?? "Chưa chọn")
-                Button { chonThuMuc = true } label: { Label("Chọn thư mục chứa video", systemImage: "folder.badge.plus") }
+                Button {
+                    loaiTepDangChon = .thuMucVideo
+                    hienTrinhChonTep = true
+                } label: {
+                    Label("Chọn thư mục chứa video", systemImage: "folder.badge.plus")
+                }
                 Button { Task { await kho.quetVideoLocal() } } label: { Label("Quét lại thư mục", systemImage: "arrow.clockwise") }.disabled(kho.thuMucDangChon == nil || kho.dangQuet)
                 if kho.dangQuet { ProgressView("Đang tạo thumbnail tại giây thứ 2...") }
                 Text("Hỗ trợ MP4, MOV và M4V. Ứng dụng tự lấy khung hình tại giây thứ 2; video ngắn sẽ dùng khung hình đầu.").font(.caption).foregroundStyle(.secondary)
@@ -25,8 +35,15 @@ struct ManHinhCaiDat: View {
                 Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
                     Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
                 }
-                Button { dangNhapTepVideo = true } label: {
+                Button {
+                    loaiTepDangChon = .danhSachTXT
+                    hienTrinhChonTep = true
+                } label: {
                     Label("Nhập danh sách từ file TXT", systemImage: "doc.badge.plus")
+                }
+                .disabled(dangNhapDanhSach)
+                if dangNhapDanhSach {
+                    ProgressView("Đang đọc và nhập danh sách...")
                 }
                 Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.txt. Mỗi video chỉ cần 2 dòng: dòng trên là link, dòng dưới là tên danh mục.")
                     .font(.caption)
@@ -99,13 +116,31 @@ struct ManHinhCaiDat: View {
         }
         .navigationTitle("Cài đặt phụ huynh")
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { dismiss() } } }
-        .fileImporter(isPresented: $chonThuMuc, allowedContentTypes: [.folder], allowsMultipleSelection: false) { result in if case .success(let urls) = result, let url = urls.first { kho.chonThuMuc(url) } else if case .failure(let e) = result { kho.thongBao = e.localizedDescription } }
-        .fileImporter(isPresented: $dangNhapTepVideo, allowedContentTypes: [.plainText], allowsMultipleSelection: false) { result in
+        .fileImporter(
+            isPresented: $hienTrinhChonTep,
+            allowedContentTypes: loaiTepDangChon == .thuMucVideo
+                ? [.folder]
+                : [UTType(filenameExtension: "txt") ?? .plainText, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
             switch result {
             case .success(let urls):
-                if let url = urls.first { Task { await kho.nhapTepVideoMacDinh(tu: url) } }
+                guard let url = urls.first else {
+                    kho.thongBao = "Không nhận được file hoặc thư mục đã chọn."
+                    return
+                }
+                switch loaiTepDangChon {
+                case .thuMucVideo:
+                    kho.chonThuMuc(url)
+                case .danhSachTXT:
+                    dangNhapDanhSach = true
+                    Task {
+                        await kho.nhapTepVideoMacDinh(tu: url)
+                        dangNhapDanhSach = false
+                    }
+                }
             case .failure(let error):
-                kho.thongBao = "Không thể chọn file: \(error.localizedDescription)"
+                kho.thongBao = "Không thể chọn dữ liệu: \(error.localizedDescription)"
             }
         }
         .alert("Thông báo", isPresented: Binding(get: { kho.thongBao != nil }, set: { if !$0 { kho.thongBao = nil } })) { Button("OK") { kho.thongBao = nil } } message: { Text(kho.thongBao ?? "") }
