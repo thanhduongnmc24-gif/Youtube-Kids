@@ -12,7 +12,7 @@ final class KhoDuLieu: ObservableObject {
     @Published private(set) var nghiDen: Date?
     private var dangNap = false
     private let tenTep = "BeXemVui.json"
-    private let phienBanVideoMacDinh = 3
+    private let phienBanVideoMacDinh = 4
     private var urlTep: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(tenTep) }
     private var thuMucThumbnail: URL {
         let u = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Thumbnails", isDirectory: true)
@@ -158,21 +158,61 @@ final class KhoDuLieu: ObservableObject {
     private func docVideoMacDinh() -> [VideoMacDinh] {
         if let url = Bundle.main.url(forResource: "VideoMacDinh", withExtension: "txt"),
            let noiDung = try? String(contentsOf: url, encoding: .utf8) {
-            let dong = noiDung.components(separatedBy: .newlines)
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { !$0.isEmpty && !$0.hasPrefix("#") }
-            var ketQua: [VideoMacDinh] = []
-            var i = 0
-            while i + 1 < dong.count {
-                ketQua.append(VideoMacDinh(link: dong[i], danhMuc: dong[i + 1]))
-                i += 2
-            }
+            let ketQua = tachDanhSachVideo(tu: noiDung)
             if !ketQua.isEmpty { return ketQua }
         }
         return [
             VideoMacDinh(link: "https://youtu.be/-zfd3yX_rN8", danhMuc: "Truyện cổ tích"),
             VideoMacDinh(link: "https://youtu.be/74sXo5z4NY4", danhMuc: "Truyện cổ tích")
         ]
+    }
+
+    private func tachDanhSachVideo(tu noiDung: String) -> [VideoMacDinh] {
+        let dong = noiDung.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        var ketQua: [VideoMacDinh] = []
+        var i = 0
+        while i + 1 < dong.count {
+            ketQua.append(VideoMacDinh(link: dong[i], danhMuc: dong[i + 1]))
+            i += 2
+        }
+        return ketQua
+    }
+
+    func nhapTepVideoMacDinh(tu url: URL) async {
+        let coQuyen = url.startAccessingSecurityScopedResource()
+        defer { if coQuyen { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let noiDung = try String(contentsOf: url, encoding: .utf8)
+            let danhSach = tachDanhSachVideo(tu: noiDung)
+            guard !danhSach.isEmpty else {
+                thongBao = "File TXT đang trống hoặc không đúng cấu trúc 2 dòng."
+                return
+            }
+            var soThem = 0
+            var linkLoi: [String] = []
+            for item in danhSach {
+                guard let id = Self.layYouTubeID(item.link) else {
+                    linkLoi.append(item.link)
+                    continue
+                }
+                let muc = item.danhMuc.isEmpty ? "Khám phá" : item.danhMuc
+                if muc != "Tất cả" && !duLieu.cauHinh.danhMuc.contains(muc) {
+                    duLieu.cauHinh.danhMuc.append(muc)
+                }
+                if duLieu.videos.contains(where: { $0.youtubeID == id }) { continue }
+                await themYouTubeNoiBo(link: id, danhMuc: muc, hienThongBao: false)
+                if duLieu.videos.contains(where: { $0.youtubeID == id }) { soThem += 1 }
+            }
+            if linkLoi.isEmpty {
+                thongBao = "Đã nhập \(danhSach.count) mục, thêm mới \(soThem) video."
+            } else {
+                thongBao = "Đã nhập \(danhSach.count) mục, thêm \(soThem), lỗi \(linkLoi.count).\n\(linkLoi.prefix(5).joined(separator: "\n"))"
+            }
+        } catch {
+            thongBao = "Không đọc được file TXT: \(error.localizedDescription)"
+        }
     }
 
     func khoiPhucVideoMacDinh() async {
@@ -204,52 +244,23 @@ final class KhoDuLieu: ObservableObject {
 
     static func layYouTubeID(_ text: String) -> String? {
         var giaTri = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
         giaTri = giaTri.removingPercentEncoding ?? giaTri
 
-        if let range = giaTri.range(of: "https://") {
-            giaTri = String(giaTri[range.lowerBound...])
+        let mau = [
+            #"(?:youtube(?:kids)?\.com|youtube-nocookie\.com)/watch\?[^\s\"'<>]*?v=([A-Za-z0-9_-]{11})"#,
+            #"youtu\.be/([A-Za-z0-9_-]{11})"#,
+            #"youtube\.com/(?:shorts|embed|live)/([A-Za-z0-9_-]{11})"#,
+            #"(?:^|[^A-Za-z0-9_-])([A-Za-z0-9_-]{11})(?:$|[^A-Za-z0-9_-])"#
+        ]
+        for bieuThuc in mau {
+            guard let regex = try? NSRegularExpression(pattern: bieuThuc, options: [.caseInsensitive]) else { continue }
+            let range = NSRange(giaTri.startIndex..., in: giaTri)
+            guard let match = regex.firstMatch(in: giaTri, range: range), match.numberOfRanges > 1,
+                  let idRange = Range(match.range(at: 1), in: giaTri) else { continue }
+            return String(giaTri[idRange])
         }
-        if let range = giaTri.range(of: "http://"), !giaTri.hasPrefix("https://") {
-            giaTri = String(giaTri[range.lowerBound...])
-        }
-        let kyTuKetThuc: Set<Character> = [" ", "<", "\"", "'"]
-        if let dauKetThuc = giaTri.firstIndex(where: { kyTuKetThuc.contains($0) }) {
-            giaTri = String(giaTri[..<dauKetThuc])
-        }
-
-        let hopLe: (String?) -> String? = { ungVien in
-            guard let id = ungVien?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  id.range(of: "^[A-Za-z0-9_-]{11}$", options: .regularExpression) != nil else { return nil }
-            return id
-        }
-
-        if let id = hopLe(giaTri) { return id }
-        guard var components = URLComponents(string: giaTri) else { return nil }
-        let host = (components.host ?? "").lowercased()
-        let cacPhan = components.path.split(separator: "/").map(String.init)
-
-        if host == "youtu.be" || host.hasSuffix(".youtu.be") {
-            return hopLe(cacPhan.first)
-        }
-
-        let laYouTube = host == "youtube.com" ||
-            host.hasSuffix(".youtube.com") ||
-            host == "youtube-nocookie.com" ||
-            host.hasSuffix(".youtube-nocookie.com") ||
-            host == "youtubekids.com" ||
-            host.hasSuffix(".youtubekids.com")
-        guard laYouTube else { return nil }
-
-        if let id = hopLe(components.queryItems?.first(where: { $0.name.lowercased() == "v" })?.value) {
-            return id
-        }
-
-        let tienTo = Set(["shorts", "embed", "live", "v"])
-        if cacPhan.count >= 2, tienTo.contains(cacPhan[0].lowercased()) {
-            return hopLe(cacPhan[1])
-        }
-
-        components.query = nil
         return nil
     }
 

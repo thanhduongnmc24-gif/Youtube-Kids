@@ -107,3 +107,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Đồng bộ hiển thị số mục đã đọc, số video thêm mới, số đã có và số link lỗi.
 - Liệt kê tối đa 5 link lỗi thay vì bỏ qua âm thầm.
 - Tăng phiên bản dữ liệu mặc định để tự đồng bộ lại các link YouTube Kids.
+
+
+## Bản v7.4
+- Video gợi ý khi tạm dừng chỉ hiện thành một hàng ngang ở đáy màn hình.
+- Thêm chức năng nhập danh sách video từ file TXT trong Cài đặt phụ huynh.
+- Tự bóc Video ID từ link thường, Shorts, YouTube Kids, youtu.be, đoạn HTML và chuỗi chứa link.
+- Ví dụ link YouTube Kids tự lấy `ktlaDZUK4Ek`.
+- Không thay đổi icon ứng dụng.

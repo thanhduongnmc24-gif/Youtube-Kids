@@ -7,6 +7,7 @@ struct ManHinhCaiDat: View {
     @State private var chonThuMuc = false
     @State private var link = ""
     @State private var dangThem = false
+    @State private var dangNhapTepVideo = false
     @AppStorage("DanhMucThemGanNhat") private var danhMucDangChon = "Khám phá"
     var body: some View {
         Form {
@@ -23,6 +24,9 @@ struct ManHinhCaiDat: View {
                 }
                 Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
                     Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
+                }
+                Button { dangNhapTepVideo = true } label: {
+                    Label("Nhập danh sách từ file TXT", systemImage: "doc.badge.plus")
                 }
                 Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.txt. Mỗi video chỉ cần 2 dòng: dòng trên là link, dòng dưới là tên danh mục.")
                     .font(.caption)
@@ -96,6 +100,14 @@ struct ManHinhCaiDat: View {
         .navigationTitle("Cài đặt phụ huynh")
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { dismiss() } } }
         .fileImporter(isPresented: $chonThuMuc, allowedContentTypes: [.folder], allowsMultipleSelection: false) { result in if case .success(let urls) = result, let url = urls.first { kho.chonThuMuc(url) } else if case .failure(let e) = result { kho.thongBao = e.localizedDescription } }
+        .fileImporter(isPresented: $dangNhapTepVideo, allowedContentTypes: [.plainText], allowsMultipleSelection: false) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first { Task { await kho.nhapTepVideoMacDinh(tu: url) } }
+            case .failure(let error):
+                kho.thongBao = "Không thể chọn file: \(error.localizedDescription)"
+            }
+        }
         .alert("Thông báo", isPresented: Binding(get: { kho.thongBao != nil }, set: { if !$0 { kho.thongBao = nil } })) { Button("OK") { kho.thongBao = nil } } message: { Text(kho.thongBao ?? "") }
     }
 }
