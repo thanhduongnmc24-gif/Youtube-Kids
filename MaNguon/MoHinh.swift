@@ -28,6 +28,9 @@ struct CauHinhUngDung: Codable {
     var tenBe = "Bé"
     var pin = "1234"
     var urlTrangPhat: String?
+    var urlGoogleSheet: String? = "https://docs.google.com/spreadsheets/d/1_eRvFxyo44e0nGdzow8HwsXOQwcb3gzHXJBvq5GVfRc/edit?usp=sharing"
+    var tabGoogleSheet: String? = "link"
+    var sttGoogleSheetDaXuLy: Int? = 0
     var gioiHanPhutMoiNgay = 60
     var gioiHanVideoMoiLuot = 10
     var gioBatDau = 7

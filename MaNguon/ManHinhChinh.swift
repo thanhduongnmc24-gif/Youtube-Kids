@@ -49,7 +49,7 @@ struct ManHinhChinh: View {
             Button { hienPin = true } label: { Image(systemName: "lock.fill").font(.title2).padding(14).background(.yellow).clipShape(Circle()).foregroundStyle(.black) }
         }
     }
-    private var thanhDanhMuc: some View { ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 12) { ForEach(kho.duLieu.cauHinh.danhMuc, id: \.self) { d in Button(d) { danhMuc = d }.font(.headline).padding(.horizontal, 22).padding(.vertical, 12).background(danhMuc == d ? Color.red : Color.white).foregroundStyle(danhMuc == d ? .white : .primary).clipShape(Capsule()).shadow(color: .black.opacity(0.08), radius: 5) } } } }
+    private var thanhDanhMuc: some View { let mucCoVideo = kho.duLieu.cauHinh.danhMuc.filter { $0 == "Tất cả" || kho.duLieu.videos.contains(where: { video in video.dangBat && video.danhMuc == $0 }) }; return ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 12) { ForEach(mucCoVideo, id: \.self) { d in Button(d) { danhMuc = d }.font(.headline).padding(.horizontal, 22).padding(.vertical, 12).background(danhMuc == d ? Color.red : Color.white).foregroundStyle(danhMuc == d ? .white : .primary).clipShape(Capsule()).shadow(color: .black.opacity(0.08), radius: 5) } } } }
     private func xaoTron() { thuTuXaoTron = kho.duLieu.videos.map(\.id).shuffled() }
     private func xaoTronNeuCan() {
         let ids = Set(kho.duLieu.videos.map(\.id))

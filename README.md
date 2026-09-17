@@ -154,3 +154,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Chạm vùng video hoặc hàng gợi ý sẽ ẩn gợi ý và phát tiếp.
 - Chọn thumbnail sẽ ẩn gợi ý trước khi phát video mới.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v8.0
+- Đồng bộ Google Sheet tab link: A=STT, B=Link, C=Thư mục.
+- Chỉ tải STT lớn hơn mốc đã lưu; có nút quét lại toàn bộ.
+- Loại video trùng theo YouTube ID và báo STT trùng/lỗi.
+- Ẩn danh mục không có video đang bật.
+- Không thay đổi icon.

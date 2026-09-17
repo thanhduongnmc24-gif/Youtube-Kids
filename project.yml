@@ -24,8 +24,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: BieuTuongUngDung
         CODE_SIGN_STYLE: Manual
-        MARKETING_VERSION: 7.9
-        CURRENT_PROJECT_VERSION: 79
+        MARKETING_VERSION: 8.0
+        CURRENT_PROJECT_VERSION: 80
     info:
       path: MaNguon/Info.plist
       properties:

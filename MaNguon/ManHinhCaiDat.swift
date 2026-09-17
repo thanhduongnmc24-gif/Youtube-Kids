@@ -24,23 +24,14 @@ struct ManHinhCaiDat: View {
                 if kho.dangQuet { ProgressView("Đang tạo thumbnail tại giây thứ 2...") }
                 Text("Hỗ trợ MP4, MOV và M4V. Ứng dụng tự lấy khung hình tại giây thứ 2; video ngắn sẽ dùng khung hình đầu.").font(.caption).foregroundStyle(.secondary)
             }
-            Section("Video mặc định") {
-                Button { Task { await kho.dongBoVideoMacDinh() } } label: {
-                    Label("Đồng bộ video mặc định", systemImage: "arrow.triangle.2.circlepath")
-                }
-                Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
-                    Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
-                }
-                Button { chonFileTXT = true } label: {
-                    Label("Nhập danh sách từ file TXT", systemImage: "doc.badge.plus")
-                }
-                .disabled(dangNhapDanhSach)
-                if dangNhapDanhSach {
-                    ProgressView("Đang đọc và nhập danh sách...")
-                }
-                Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.txt. Mỗi video chỉ cần 2 dòng: dòng trên là link, dòng dưới là tên danh mục.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Section("Cập nhật từ Google Sheet") {
+                TextField("URL Google Sheet", text: Binding(get: { kho.duLieu.cauHinh.urlGoogleSheet ?? "" }, set: { kho.duLieu.cauHinh.urlGoogleSheet = $0 }))
+                    .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                TextField("Tên tab", text: Binding(get: { kho.duLieu.cauHinh.tabGoogleSheet ?? "link" }, set: { kho.duLieu.cauHinh.tabGoogleSheet = $0 }))
+                LabeledContent("Đã cập nhật đến STT", value: String(kho.duLieu.cauHinh.sttGoogleSheetDaXuLy ?? 0))
+                Button { Task { await kho.capNhatGoogleSheet() } } label: { Label("Update link video từ Google Sheet", systemImage: "arrow.triangle.2.circlepath") }
+                Button { Task { await kho.capNhatGoogleSheet(lamMoiToanBo: true) } } label: { Label("Quét lại toàn bộ Sheet", systemImage: "arrow.counterclockwise") }
+                Text("Cột A: STT, cột B: Link, cột C: Thư mục. Đồng bộ thường chỉ đọc STT mới.").font(.caption).foregroundStyle(.secondary)
             }
             Section("Thêm video YouTube được duyệt") {
                 TextField("Dán link video YouTube", text: $link)

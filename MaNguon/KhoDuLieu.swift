@@ -229,6 +229,67 @@ final class KhoDuLieu: ObservableObject {
         }
     }
 
+    func capNhatGoogleSheet(lamMoiToanBo: Bool = false) async {
+        let linkSheet = duLieu.cauHinh.urlGoogleSheet ?? ""
+        let tenTab = duLieu.cauHinh.tabGoogleSheet ?? "link"
+        guard let idRange = linkSheet.range(of: #"/spreadsheets/d/([^/]+)"#, options: .regularExpression) else {
+            thongBao = "URL Google Sheet không hợp lệ."
+            return
+        }
+        let doan = String(linkSheet[idRange])
+        guard let sheetID = doan.split(separator: "/").last else { thongBao = "Không lấy được Sheet ID."; return }
+        var components = URLComponents(string: "https://docs.google.com/spreadsheets/d/\(sheetID)/gviz/tq")!
+        components.queryItems = [URLQueryItem(name: "tqx", value: "out:csv"), URLQueryItem(name: "sheet", value: tenTab)]
+        guard let url = components.url else { thongBao = "Không tạo được URL đồng bộ."; return }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  let csv = String(data: data, encoding: .utf8) else {
+                thongBao = "Không tải được Google Sheet. Hãy chia sẻ Sheet cho bất kỳ ai có liên kết."
+                return
+            }
+            let rows = Self.docCSV(csv)
+            let mocCu = lamMoiToanBo ? 0 : (duLieu.cauHinh.sttGoogleSheetDaXuLy ?? 0)
+            var sttLonNhat = mocCu, soThem = 0, soDaCo = 0
+            var sttLoi: [Int] = [], sttTrung: [Int] = []
+            var idDauTien: [String: Int] = [:]
+            for row in rows.dropFirst() {
+                guard row.count >= 3, let stt = Int(row[0].trimmingCharacters(in: .whitespacesAndNewlines)) else { continue }
+                sttLonNhat = max(sttLonNhat, stt)
+                guard stt > mocCu else { continue }
+                guard let id = Self.layYouTubeID(row[1]) else { sttLoi.append(stt); continue }
+                if idDauTien[id] != nil { sttTrung.append(stt); continue }
+                idDauTien[id] = stt
+                if duLieu.videos.contains(where: { $0.youtubeID == id }) { soDaCo += 1; continue }
+                let muc = row[2].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Khám phá" : row[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                if muc != "Tất cả" && !duLieu.cauHinh.danhMuc.contains(muc) { duLieu.cauHinh.danhMuc.append(muc) }
+                await themYouTubeNoiBo(link: id, danhMuc: muc, hienThongBao: false)
+                if duLieu.videos.contains(where: { $0.youtubeID == id }) { soThem += 1 }
+            }
+            duLieu.cauHinh.sttGoogleSheetDaXuLy = sttLonNhat
+            thongBao = "Cập nhật đến STT \(sttLonNhat). Thêm \(soThem), đã có \(soDaCo), trùng STT: \(sttTrung.map(String.init).joined(separator: ", ").ifEmpty("không")), lỗi STT: \(sttLoi.map(String.init).joined(separator: ", ").ifEmpty("không"))."
+        } catch { thongBao = "Lỗi tải Google Sheet: \(error.localizedDescription)" }
+    }
+
+    private static func docCSV(_ text: String) -> [[String]] {
+        var rows: [[String]] = [], row: [String] = [], field = "", inQuotes = false
+        var i = text.startIndex
+        while i < text.endIndex {
+            let c = text[i]
+            if c == "\"" {
+                let n = text.index(after: i)
+                if inQuotes && n < text.endIndex && text[n] == "\"" { field.append("\""); i = n } else { inQuotes.toggle() }
+            } else if c == "," && !inQuotes { row.append(field); field = "" }
+            else if (c == "\n" || c == "\r") && !inQuotes {
+                if c == "\r" { let n = text.index(after: i); if n < text.endIndex && text[n] == "\n" { i = n } }
+                row.append(field); if row.contains(where: { !$0.isEmpty }) { rows.append(row) }; row = []; field = ""
+            } else { field.append(c) }
+            i = text.index(after: i)
+        }
+        row.append(field); if row.contains(where: { !$0.isEmpty }) { rows.append(row) }
+        return rows
+    }
+
     func khoiPhucVideoMacDinh() async {
         duLieu.idsVideoMacDinhDaXoa = []
         duLieu.phienBanVideoMacDinhDaNap = nil
@@ -309,3 +370,5 @@ final class KhoDuLieu: ObservableObject {
 
 extension JSONEncoder { static var chuan: JSONEncoder { let e = JSONEncoder(); e.outputFormatting = [.prettyPrinted, .sortedKeys]; e.dateEncodingStrategy = .iso8601; return e } }
 extension JSONDecoder { static var chuan: JSONDecoder { let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601; return d } }
+
+private extension String { func ifEmpty(_ value: String) -> String { isEmpty ? value : self } }
