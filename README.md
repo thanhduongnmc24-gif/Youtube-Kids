@@ -169,3 +169,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Tách danh sách danh mục có video thành computed property rõ kiểu.
 - Giảm độ phức tạp biểu thức để Swift compiler xử lý ổn định.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v8.2
+- Chạm màn hình chỉ hiện thanh điều khiển, không tự tạm dừng.
+- Thanh điều khiển có phát/tạm dừng, lùi 10 giây, tiến 10 giây và kéo tua.
+- Thanh điều khiển tự ẩn sau 1 giây khi không thao tác.
+- Vuốt lên hiện một hàng video tiếp theo nhưng video hiện tại vẫn tiếp tục phát.
+- Không thay đổi icon ứng dụng.

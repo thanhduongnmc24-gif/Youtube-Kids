@@ -7,32 +7,43 @@
   <title>Bé Xem Vui Player</title>
   <style>
     *{box-sizing:border-box}html,body,#player{width:100%;height:100%;margin:0;background:#000;overflow:hidden}
-    #touch{position:fixed;inset:0;z-index:5;background:transparent}
-    #resumeTouch{display:none;position:fixed;inset:0;z-index:9;background:transparent}
-    #panel{display:none;position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(0,0,0,.88);padding:12px 14px;color:#fff;font-family:-apple-system,system-ui,sans-serif}
-    #panel.show{display:block}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.top h2{margin:0;font-size:17px}
+    #gesture{position:fixed;inset:0;z-index:5;background:transparent;touch-action:none}
+    #controls{display:none;position:fixed;left:3vw;right:3vw;bottom:4vh;z-index:12;padding:12px 14px;background:rgba(0,0,0,.78);border-radius:18px;color:#fff;font-family:-apple-system,system-ui,sans-serif}
+    #controls.show{display:block}.controlRow{display:flex;align-items:center;gap:12px}.controlButton{border:0;border-radius:999px;background:#fff;color:#111;min-width:43px;height:43px;font-size:18px;font-weight:800}
+    #seek{flex:1;accent-color:#ff2d2d}#time{white-space:nowrap;font-variant-numeric:tabular-nums;font-size:13px}
+    #panel{display:none;position:fixed;left:0;right:0;bottom:0;z-index:15;background:rgba(0,0,0,.88);padding:12px 14px;color:#fff;font-family:-apple-system,system-ui,sans-serif}
+    #panel.show{display:block}.top{margin-bottom:8px}.top h2{margin:0;font-size:17px}
     #grid{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}.card{border:0;padding:0;background:#222;min-width:150px;width:150px;border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
     .card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.card span{display:block;color:#fff;padding:7px;text-align:left;font-weight:700;font-size:13px}
     #message{color:#fff;font:20px -apple-system,system-ui;text-align:center;padding-top:25vh}
   </style>
 </head>
 <body>
-  <div id="player"></div><div id="touch" aria-label="Tạm dừng"></div><div id="resumeTouch" aria-label="Tiếp tục phát"></div>
-  <section id="panel"><div class="top"><h2>Chọn video tiếp theo</h2></div><div id="grid"></div></section>
+  <div id="player"></div><div id="gesture"></div>
+  <div id="controls"><div class="controlRow"><button id="back" class="controlButton">-10</button><button id="play" class="controlButton">▶</button><input id="seek" type="range" min="0" max="1000" value="0"><span id="time">0:00 / 0:00</span><button id="forward" class="controlButton">+10</button></div></div>
+  <section id="panel"><div class="top"><h2>Video tiếp theo</h2></div><div id="grid"></div></section>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const q=new URLSearchParams(location.search), first=q.get('v')||'', valid=x=>/^[A-Za-z0-9_-]{11}$/.test(x||'');
+    const q=new URLSearchParams(location.search),first=q.get('v')||'',valid=x=>/^[A-Za-z0-9_-]{11}$/.test(x||'');
     const suggestions=(q.get('goiY')||'').split(',').filter(valid).filter(x=>x!==first).slice(0,10);
-    let player,current=first;
-    function onYouTubeIframeAPIReady(){
-      if(!valid(first)){document.getElementById('player').innerHTML='<div id="message">Liên kết video không hợp lệ.</div>';return;}
-      player=new YT.Player('player',{width:'100%',height:'100%',videoId:first,playerVars:{autoplay:1,playsinline:1,controls:1,rel:0,iv_load_policy:3},events:{onReady:e=>e.target.playVideo()}});
-    }
-    const panel=document.getElementById('panel'),touch=document.getElementById('touch'),resumeTouch=document.getElementById('resumeTouch'),grid=document.getElementById('grid');
-    function showSuggestions(){if(player&&player.pauseVideo)player.pauseVideo();panel.classList.add('show');touch.style.display='none';resumeTouch.style.display='block';}
-    function resume(){panel.classList.remove('show');resumeTouch.style.display='none';touch.style.display='block';if(player&&player.playVideo)player.playVideo();}
-    touch.addEventListener('click',showSuggestions);resumeTouch.addEventListener('click',resume);panel.addEventListener('click',resume);
-    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=e=>{e.stopPropagation();current=id;panel.classList.remove('show');resumeTouch.style.display='none';touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
+    const gesture=document.getElementById('gesture'),controls=document.getElementById('controls'),panel=document.getElementById('panel'),seek=document.getElementById('seek'),time=document.getElementById('time'),play=document.getElementById('play'),grid=document.getElementById('grid');
+    let player,current=first,hideTimer=null,ticker=null,startX=0,startY=0,moved=false,seeking=false;
+    const fmt=s=>{s=Math.max(0,Math.floor(Number(s)||0));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+    function scheduleHide(){clearTimeout(hideTimer);hideTimer=setTimeout(()=>controls.classList.remove('show'),1000)}
+    function showControls(){controls.classList.add('show');scheduleHide()}
+    function updateControls(){if(!player||!player.getDuration)return;const d=player.getDuration()||0,t=player.getCurrentTime()||0;if(!seeking)seek.value=d?Math.round(t/d*1000):0;time.textContent=`${fmt(t)} / ${fmt(d)}`;play.textContent=player.getPlayerState&&player.getPlayerState()===YT.PlayerState.PLAYING?'❚❚':'▶'}
+    function onYouTubeIframeAPIReady(){if(!valid(first)){document.getElementById('player').innerHTML='<div id="message">Liên kết video không hợp lệ.</div>';return;}player=new YT.Player('player',{width:'100%',height:'100%',videoId:first,playerVars:{autoplay:1,playsinline:1,controls:0,rel:0,iv_load_policy:3},events:{onReady:e=>{e.target.playVideo();ticker=setInterval(updateControls,250)},onStateChange:updateControls}})}
+    play.onclick=e=>{e.stopPropagation();if(player.getPlayerState()===YT.PlayerState.PLAYING)player.pauseVideo();else player.playVideo();showControls()};
+    document.getElementById('back').onclick=e=>{e.stopPropagation();player.seekTo(Math.max(0,player.getCurrentTime()-10),true);showControls()};
+    document.getElementById('forward').onclick=e=>{e.stopPropagation();player.seekTo(Math.min(player.getDuration(),player.getCurrentTime()+10),true);showControls()};
+    seek.oninput=e=>{e.stopPropagation();seeking=true;clearTimeout(hideTimer);const d=player.getDuration()||0;time.textContent=`${fmt(d*Number(seek.value)/1000)} / ${fmt(d)}`};
+    seek.onchange=e=>{e.stopPropagation();const d=player.getDuration()||0;player.seekTo(d*Number(seek.value)/1000,true);seeking=false;showControls()};
+    controls.onclick=e=>{e.stopPropagation();showControls()};
+    gesture.addEventListener('pointerdown',e=>{startX=e.clientX;startY=e.clientY;moved=false});
+    gesture.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-startX)>12||Math.abs(e.clientY-startY)>12)moved=true});
+    gesture.addEventListener('pointerup',e=>{const dx=e.clientX-startX,dy=e.clientY-startY;if(dy < -70&&Math.abs(dy)>Math.abs(dx)){panel.classList.add('show');controls.classList.remove('show');clearTimeout(hideTimer);return}if(!moved)showControls()});
+    panel.addEventListener('click',()=>panel.classList.remove('show'));
+    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=e=>{e.stopPropagation();current=id;panel.classList.remove('show');player.loadVideoById(id);};grid.appendChild(b)});
   </script>
 </body>
 </html>
