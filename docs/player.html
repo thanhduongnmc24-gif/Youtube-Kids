@@ -8,6 +8,7 @@
   <style>
     *{box-sizing:border-box}html,body,#player{width:100%;height:100%;margin:0;background:#000;overflow:hidden}
     #touch{position:fixed;inset:0;z-index:5;background:transparent}
+    #resumeTouch{display:none;position:fixed;inset:0;z-index:9;background:transparent}
     #panel{display:none;position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(0,0,0,.88);padding:12px 14px;color:#fff;font-family:-apple-system,system-ui,sans-serif}
     #panel.show{display:block}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.top h2{margin:0;font-size:17px}
     #grid{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}.card{border:0;padding:0;background:#222;min-width:150px;width:150px;border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
@@ -16,7 +17,7 @@
   </style>
 </head>
 <body>
-  <div id="player"></div><div id="touch" aria-label="Tạm dừng"></div>
+  <div id="player"></div><div id="touch" aria-label="Tạm dừng"></div><div id="resumeTouch" aria-label="Tiếp tục phát"></div>
   <section id="panel"><div class="top"><h2>Chọn video tiếp theo</h2></div><div id="grid"></div></section>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
@@ -27,11 +28,11 @@
       if(!valid(first)){document.getElementById('player').innerHTML='<div id="message">Liên kết video không hợp lệ.</div>';return;}
       player=new YT.Player('player',{width:'100%',height:'100%',videoId:first,playerVars:{autoplay:1,playsinline:1,controls:1,rel:0,iv_load_policy:3},events:{onReady:e=>e.target.playVideo()}});
     }
-    const panel=document.getElementById('panel'),touch=document.getElementById('touch'),grid=document.getElementById('grid');
-    function showSuggestions(){if(player&&player.pauseVideo)player.pauseVideo();panel.classList.add('show');touch.style.display='none';}
-    function resume(){panel.classList.remove('show');touch.style.display='block';if(player&&player.playVideo)player.playVideo();}
-    touch.addEventListener('click',showSuggestions);panel.addEventListener('click',resume);
-    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=e=>{e.stopPropagation();current=id;panel.classList.remove('show');touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
+    const panel=document.getElementById('panel'),touch=document.getElementById('touch'),resumeTouch=document.getElementById('resumeTouch'),grid=document.getElementById('grid');
+    function showSuggestions(){if(player&&player.pauseVideo)player.pauseVideo();panel.classList.add('show');touch.style.display='none';resumeTouch.style.display='block';}
+    function resume(){panel.classList.remove('show');resumeTouch.style.display='none';touch.style.display='block';if(player&&player.playVideo)player.playVideo();}
+    touch.addEventListener('click',showSuggestions);resumeTouch.addEventListener('click',resume);panel.addEventListener('click',resume);
+    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=e=>{e.stopPropagation();current=id;panel.classList.remove('show');resumeTouch.style.display='none';touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
   </script>
 </body>
 </html>

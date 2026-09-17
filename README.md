@@ -146,3 +146,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Bổ sung đầy đủ giao diện nhập PIN hiện tại, PIN mới và xác nhận PIN mới.
 - Giữ nguyên vuốt xuống để đóng video, mở khóa tự động 4 số và hàng gợi ý chạm để xem tiếp.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v7.9
+- Sửa hàng video gợi ý không ẩn khi tiếp tục phát.
+- Thêm lớp bắt chạm phủ toàn màn hình khi video đang tạm dừng.
+- Chạm vùng video hoặc hàng gợi ý sẽ ẩn gợi ý và phát tiếp.
+- Chọn thumbnail sẽ ẩn gợi ý trước khi phát video mới.
+- Không thay đổi icon ứng dụng.
