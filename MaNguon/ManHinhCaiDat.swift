@@ -10,6 +10,9 @@ struct ManHinhCaiDat: View {
     @State private var dangThem = false
     @State private var dangNhapDanhSach = false
     @AppStorage("DanhMucThemGanNhat") private var danhMucDangChon = "Khám phá"
+    @State private var pinCu = ""
+    @State private var pinMoi = ""
+    @State private var pinXacNhan = ""
     var body: some View {
         Form {
             Section("Thư mục video local") {
@@ -86,8 +89,16 @@ struct ManHinhCaiDat: View {
             }
             Section("Hồ sơ và bảo vệ") {
                 TextField("Tên bé", text: $kho.duLieu.cauHinh.tenBe)
-                SecureField("Mã PIN phụ huynh", text: $kho.duLieu.cauHinh.pin).keyboardType(.numberPad)
-                Text("PIN mặc định: 1234. Hãy đổi ngay sau khi cài.").font(.caption).foregroundStyle(.secondary)
+                SecureField("Mã PIN hiện tại", text: $pinCu)
+                    .keyboardType(.numberPad)
+                SecureField("Mã PIN mới gồm 4 số", text: $pinMoi)
+                    .keyboardType(.numberPad)
+                SecureField("Nhập lại mã PIN mới", text: $pinXacNhan)
+                    .keyboardType(.numberPad)
+                Button("Đổi mã PIN") { doiMaPIN() }
+                Text("Mã PIN luôn gồm đúng 4 chữ số. PIN mặc định là 1234.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Thư viện đã duyệt") {
                 ForEach($kho.duLieu.videos) { $v in

@@ -139,3 +139,10 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Bỏ nút Mở cài đặt.
 - Thêm chức năng đổi mã PIN với mã cũ, mã mới và xác nhận.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v7.8
+- Sửa lỗi build do thiếu ba State dùng cho đổi mã PIN.
+- Bổ sung đầy đủ giao diện nhập PIN hiện tại, PIN mới và xác nhận PIN mới.
+- Giữ nguyên vuốt xuống để đóng video, mở khóa tự động 4 số và hàng gợi ý chạm để xem tiếp.
+- Không thay đổi icon ứng dụng.
