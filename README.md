@@ -99,3 +99,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Sửa lỗi cú pháp chuỗi tại hàm nhận dạng YouTube ID.
 - Dùng `Set<Character>` để nhận biết khoảng trắng, thẻ HTML và dấu nháy an toàn.
 - Các lỗi dây chuyền về JSONEncoder, duocPhepXem và ghiLuotXem được loại bỏ sau khi parser đọc đầy đủ class.
+
+
+## Bản v7.3
+- Hỗ trợ `youtubekids.com` và `www.youtubekids.com`.
+- Bỏ qua các tham số phụ như `hl` và lấy đúng tham số `v`.
+- Đồng bộ hiển thị số mục đã đọc, số video thêm mới, số đã có và số link lỗi.
+- Liệt kê tối đa 5 link lỗi thay vì bỏ qua âm thầm.
+- Tăng phiên bản dữ liệu mặc định để tự đồng bộ lại các link YouTube Kids.

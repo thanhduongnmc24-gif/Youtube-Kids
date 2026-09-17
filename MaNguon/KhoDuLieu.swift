@@ -12,7 +12,7 @@ final class KhoDuLieu: ObservableObject {
     @Published private(set) var nghiDen: Date?
     private var dangNap = false
     private let tenTep = "BeXemVui.json"
-    private let phienBanVideoMacDinh = 2
+    private let phienBanVideoMacDinh = 3
     private var urlTep: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(tenTep) }
     private var thuMucThumbnail: URL {
         let u = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Thumbnails", isDirectory: true)
@@ -116,20 +116,43 @@ final class KhoDuLieu: ObservableObject {
         }
 
         var soThem = 0
+        var soDaCo = 0
+        var linkLoi: [String] = []
         let boQuaDaXoa = duLieu.phienBanVideoMacDinhDaNap == phienBanVideoMacDinh
+
         for item in danhSach {
             let danhMuc = item.danhMuc.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let id = Self.layYouTubeID(item.link) else {
+                linkLoi.append(item.link)
+                continue
+            }
             if !danhMuc.isEmpty && danhMuc != "Tất cả" && !duLieu.cauHinh.danhMuc.contains(danhMuc) {
                 duLieu.cauHinh.danhMuc.append(danhMuc)
             }
-            guard let id = Self.layYouTubeID(item.link),
-                  !(boQuaDaXoa && (duLieu.idsVideoMacDinhDaXoa ?? []).contains(id)),
-                  !duLieu.videos.contains(where: { $0.youtubeID == id }) else { continue }
-            await themYouTubeNoiBo(link: item.link, danhMuc: danhMuc.isEmpty ? "Khám phá" : danhMuc, hienThongBao: false)
+            if boQuaDaXoa && (duLieu.idsVideoMacDinhDaXoa ?? []).contains(id) {
+                soDaCo += 1
+                continue
+            }
+            if duLieu.videos.contains(where: { $0.youtubeID == id }) {
+                soDaCo += 1
+                continue
+            }
+            await themYouTubeNoiBo(
+                link: item.link,
+                danhMuc: danhMuc.isEmpty ? "Khám phá" : danhMuc,
+                hienThongBao: false
+            )
             if duLieu.videos.contains(where: { $0.youtubeID == id }) { soThem += 1 }
         }
+
         duLieu.phienBanVideoMacDinhDaNap = phienBanVideoMacDinh
-        if hienThongBao { thongBao = "Đã đồng bộ \(soThem) video mặc định mới." }
+        guard hienThongBao else { return }
+        if linkLoi.isEmpty {
+            thongBao = "Đã đọc \(danhSach.count) mục: thêm \(soThem), đã có \(soDaCo), lỗi 0."
+        } else {
+            let chiTiet = linkLoi.prefix(5).joined(separator: "\n")
+            thongBao = "Đã đọc \(danhSach.count) mục: thêm \(soThem), đã có \(soDaCo), lỗi \(linkLoi.count).\nLink lỗi:\n\(chiTiet)"
+        }
     }
 
     private func docVideoMacDinh() -> [VideoMacDinh] {
@@ -209,7 +232,12 @@ final class KhoDuLieu: ObservableObject {
             return hopLe(cacPhan.first)
         }
 
-        let laYouTube = host == "youtube.com" || host.hasSuffix(".youtube.com") || host == "youtube-nocookie.com" || host.hasSuffix(".youtube-nocookie.com")
+        let laYouTube = host == "youtube.com" ||
+            host.hasSuffix(".youtube.com") ||
+            host == "youtube-nocookie.com" ||
+            host.hasSuffix(".youtube-nocookie.com") ||
+            host == "youtubekids.com" ||
+            host.hasSuffix(".youtubekids.com")
         guard laYouTube else { return nil }
 
         if let id = hopLe(components.queryItems?.first(where: { $0.name.lowercased() == "v" })?.value) {
