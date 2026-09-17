@@ -24,7 +24,7 @@ struct ManHinhCaiDat: View {
                 Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
                     Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
                 }
-                Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.json. Nếu tài nguyên bị thiếu, ứng dụng vẫn dùng hai video dự phòng tích hợp sẵn.")
+                Text("Danh sách nguồn: TaiNguyen/VideoMacDinh.txt. Mỗi video chỉ cần 2 dòng: dòng trên là link, dòng dưới là tên danh mục.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

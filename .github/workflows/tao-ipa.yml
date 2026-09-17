@@ -26,7 +26,7 @@ jobs:
       - name: Kiem tra tai nguyen bat buoc
         run: |
           ICON="TaiNguyen/HinhAnh.xcassets/BieuTuongUngDung.appiconset/BieuTuong-1024.png"
-          JSON="TaiNguyen/VideoMacDinh.json"
+          JSON="TaiNguyen/VideoMacDinh.txt"
           test -f "$ICON" || { echo "Thieu icon: $ICON"; exit 1; }
           test -f "$JSON" || { echo "Thieu danh sach video: $JSON"; exit 1; }
           W=$(sips -g pixelWidth "$ICON" | tail -n 1 | awk '{print $2}')
@@ -40,7 +40,7 @@ jobs:
             sips -s format png -z 1024 1024 "$ICON" --out "$TMP_ICON"
             cp "$TMP_ICON" "$ICON"
           fi
-          python3 -m json.tool "$JSON" > /dev/null
+          test -s "$JSON" || { echo "VideoMacDinh.txt dang trong"; exit 1; }
           echo "Icon vuong hop le va da san sang o kich thuoc 1024x1024."
 
       - name: Tao du an Xcode
@@ -48,7 +48,7 @@ jobs:
 
       - name: Kiem tra resource build phase
         run: |
-          grep -q "VideoMacDinh.json in Resources" BeXemVui.xcodeproj/project.pbxproj || { echo "VideoMacDinh.json chua nam trong Resources build phase"; exit 1; }
+          grep -q "VideoMacDinh.txt in Resources" BeXemVui.xcodeproj/project.pbxproj || { echo "VideoMacDinh.txt chua nam trong Resources build phase"; exit 1; }
           grep -q "HinhAnh.xcassets in Resources" BeXemVui.xcodeproj/project.pbxproj || { echo "HinhAnh.xcassets chua nam trong Resources build phase"; exit 1; }
           echo "Resource build phase hop le."
 
@@ -88,8 +88,8 @@ jobs:
       - name: Kiem tra tai nguyen trong app
         run: |
           APP="build/BeXemVui.xcarchive/Products/Applications/BeXemVui.app"
-          JSON_TRONG_APP=$(find "$APP" -name "VideoMacDinh.json" -type f | head -n 1)
-          test -n "$JSON_TRONG_APP" || { echo "VideoMacDinh.json khong co trong app bundle"; find "$APP" -maxdepth 3 -type f; exit 1; }
+          JSON_TRONG_APP=$(find "$APP" -name "VideoMacDinh.txt" -type f | head -n 1)
+          test -n "$JSON_TRONG_APP" || { echo "VideoMacDinh.txt khong co trong app bundle"; find "$APP" -maxdepth 3 -type f; exit 1; }
           echo "Da tim thay: $JSON_TRONG_APP"
           test -f "$APP/Assets.car" || { echo "Assets.car khong ton tai, icon chua duoc bien dich"; find "$APP" -maxdepth 3 -type f; exit 1; }
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"

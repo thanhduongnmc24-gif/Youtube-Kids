@@ -2,31 +2,37 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Bé Xem Vui Player</title>
   <style>
-    html, body, #player { width:100%; height:100%; margin:0; padding:0; overflow:hidden; background:#000; }
-    iframe { width:100%; height:100%; border:0; }
-    #message { color:#fff; font:20px -apple-system,system-ui,sans-serif; text-align:center; padding-top:25vh; }
+    *{box-sizing:border-box}html,body,#player{width:100%;height:100%;margin:0;background:#000;overflow:hidden}
+    #touch{position:fixed;inset:0;z-index:5;background:transparent}
+    #panel{display:none;position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.82);padding:7vh 5vw;overflow:auto;color:#fff;font-family:-apple-system,system-ui,sans-serif}
+    #panel.show{display:block}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.top h2{margin:0;font-size:24px}
+    #resume{border:0;border-radius:999px;padding:12px 20px;background:#fff;color:#111;font-weight:700;font-size:16px}
+    #grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}.card{border:0;padding:0;background:#222;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.card span{display:block;color:#fff;padding:10px;text-align:left;font-weight:700}
+    #message{color:#fff;font:20px -apple-system,system-ui;text-align:center;padding-top:25vh}
   </style>
 </head>
 <body>
-  <div id="player"></div>
+  <div id="player"></div><div id="touch" aria-label="Tạm dừng"></div>
+  <section id="panel"><div class="top"><h2>Chọn video tiếp theo</h2><button id="resume">▶ Xem tiếp</button></div><div id="grid"></div></section>
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const videoId = new URLSearchParams(location.search).get('v');
-    const valid = /^[A-Za-z0-9_-]{11}$/.test(videoId || '');
-    if (!valid) {
-      document.getElementById('player').innerHTML = '<div id="message">Liên kết video không hợp lệ.</div>';
-    } else {
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId) + '?autoplay=1&playsinline=1&controls=1&rel=0&iv_load_policy=3';
-      iframe.title = 'YouTube video player';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-      iframe.allowFullscreen = true;
-      document.getElementById('player').appendChild(iframe);
+    const q=new URLSearchParams(location.search), first=q.get('v')||'', valid=x=>/^[A-Za-z0-9_-]{11}$/.test(x||'');
+    const suggestions=(q.get('goiY')||'').split(',').filter(valid).filter(x=>x!==first).slice(0,10);
+    let player,current=first;
+    function onYouTubeIframeAPIReady(){
+      if(!valid(first)){document.getElementById('player').innerHTML='<div id="message">Liên kết video không hợp lệ.</div>';return;}
+      player=new YT.Player('player',{width:'100%',height:'100%',videoId:first,playerVars:{autoplay:1,playsinline:1,controls:1,rel:0,iv_load_policy:3},events:{onReady:e=>e.target.playVideo()}});
     }
+    const panel=document.getElementById('panel'),touch=document.getElementById('touch'),grid=document.getElementById('grid');
+    function showSuggestions(){if(player&&player.pauseVideo)player.pauseVideo();panel.classList.add('show');touch.style.display='none';}
+    function resume(){panel.classList.remove('show');touch.style.display='block';if(player&&player.playVideo)player.playVideo();}
+    touch.addEventListener('click',showSuggestions);document.getElementById('resume').addEventListener('click',resume);
+    suggestions.forEach(id=>{const b=document.createElement('button');b.className='card';b.innerHTML=`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="Video gợi ý"><span>Phát video này</span>`;b.onclick=()=>{current=id;panel.classList.remove('show');touch.style.display='block';player.loadVideoById(id);};grid.appendChild(b);});
   </script>
 </body>
 </html>

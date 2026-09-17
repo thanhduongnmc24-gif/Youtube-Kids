@@ -79,3 +79,17 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Sửa trình phát trên iPad từ popup dạng sheet sang fullScreenCover toàn màn hình.
 - Ẩn thanh trạng thái và system overlays khi đang phát video.
 - Giữ nút đóng riêng của ứng dụng để thoát trình phát.
+
+
+## Bản v7.0
+- Màn hình phát dùng fullScreenCover nên chiếm toàn bộ màn hình iPad.
+- Bộ đọc liên kết hỗ trợ URL đầy đủ và rút gọn: watch, shorts, embed, live, youtu.be, m.youtube.com và music.youtube.com.
+- Tự loại tham số chia sẻ như `si`, `list`, `index`, `t` và kiểm tra Video ID đủ 11 ký tự.
+
+## Bản v7.1
+- Đổi danh sách mẫu sang `VideoMacDinh.txt`, mỗi video chỉ gồm link ở dòng trên và danh mục ở dòng dưới.
+- Tự tạo danh mục mới nếu tên trong file chưa tồn tại.
+- Bổ sung các link mẫu vào Truyện cổ tích, Nấu ăn, Khám phá và Nhạc.
+- Khi chạm màn hình phát YouTube, video tạm dừng và hiện tối đa 10 thumbnail gợi ý.
+- Chạm thumbnail để phát ngay video được chọn hoặc chọn Xem tiếp.
+- Không chỉnh sửa hay thay thế file icon ứng dụng.
