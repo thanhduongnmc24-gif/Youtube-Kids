@@ -162,3 +162,10 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Loại video trùng theo YouTube ID và báo STT trùng/lỗi.
 - Ẩn danh mục không có video đang bật.
 - Không thay đổi icon.
+
+
+## Bản v8.1
+- Sửa lỗi closure lồng nhau khi lọc danh mục có video.
+- Tách danh sách danh mục có video thành computed property rõ kiểu.
+- Giảm độ phức tạp biểu thức để Swift compiler xử lý ổn định.
+- Không thay đổi icon ứng dụng.
