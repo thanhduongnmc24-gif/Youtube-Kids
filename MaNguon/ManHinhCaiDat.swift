@@ -2,14 +2,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ManHinhCaiDat: View {
-    private enum LoaiTepDangChon {
-        case thuMucVideo
-        case danhSachTXT
-    }
     @EnvironmentObject var kho: KhoDuLieu
     @Environment(\.dismiss) var dismiss
-    @State private var hienTrinhChonTep = false
-    @State private var loaiTepDangChon: LoaiTepDangChon = .thuMucVideo
+    @State private var chonThuMuc = false
+    @State private var chonFileTXT = false
     @State private var link = ""
     @State private var dangThem = false
     @State private var dangNhapDanhSach = false
@@ -18,10 +14,7 @@ struct ManHinhCaiDat: View {
         Form {
             Section("Thư mục video local") {
                 LabeledContent("Thư mục", value: kho.thuMucDangChon?.lastPathComponent ?? "Chưa chọn")
-                Button {
-                    loaiTepDangChon = .thuMucVideo
-                    hienTrinhChonTep = true
-                } label: {
+                Button { chonThuMuc = true } label: {
                     Label("Chọn thư mục chứa video", systemImage: "folder.badge.plus")
                 }
                 Button { Task { await kho.quetVideoLocal() } } label: { Label("Quét lại thư mục", systemImage: "arrow.clockwise") }.disabled(kho.thuMucDangChon == nil || kho.dangQuet)
@@ -35,10 +28,7 @@ struct ManHinhCaiDat: View {
                 Button { Task { await kho.khoiPhucVideoMacDinh() } } label: {
                     Label("Khôi phục video mặc định", systemImage: "arrow.uturn.backward.circle")
                 }
-                Button {
-                    loaiTepDangChon = .danhSachTXT
-                    hienTrinhChonTep = true
-                } label: {
+                Button { chonFileTXT = true } label: {
                     Label("Nhập danh sách từ file TXT", systemImage: "doc.badge.plus")
                 }
                 .disabled(dangNhapDanhSach)
@@ -117,32 +107,65 @@ struct ManHinhCaiDat: View {
         .navigationTitle("Cài đặt phụ huynh")
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { dismiss() } } }
         .fileImporter(
-            isPresented: $hienTrinhChonTep,
-            allowedContentTypes: loaiTepDangChon == .thuMucVideo
-                ? [.folder]
-                : [UTType(filenameExtension: "txt") ?? .plainText, .plainText],
+            isPresented: $chonThuMuc,
+            allowedContentTypes: [.folder],
             allowsMultipleSelection: false
         ) { result in
             switch result {
             case .success(let urls):
-                guard let url = urls.first else {
-                    kho.thongBao = "Không nhận được file hoặc thư mục đã chọn."
-                    return
-                }
-                switch loaiTepDangChon {
-                case .thuMucVideo:
-                    kho.chonThuMuc(url)
-                case .danhSachTXT:
-                    dangNhapDanhSach = true
-                    Task {
-                        await kho.nhapTepVideoMacDinh(tu: url)
-                        dangNhapDanhSach = false
-                    }
-                }
+                if let url = urls.first { kho.chonThuMuc(url) }
             case .failure(let error):
-                kho.thongBao = "Không thể chọn dữ liệu: \(error.localizedDescription)"
+                kho.thongBao = "Không thể chọn thư mục: \(error.localizedDescription)"
             }
         }
+        .sheet(isPresented: $chonFileTXT) {
+            TrinhChonFileTXT { url in
+                chonFileTXT = false
+                guard let url else { return }
+                dangNhapDanhSach = true
+                Task {
+                    await kho.nhapTepVideoMacDinh(tu: url)
+                    dangNhapDanhSach = false
+                }
+            }
+            .ignoresSafeArea()
+        }
         .alert("Thông báo", isPresented: Binding(get: { kho.thongBao != nil }, set: { if !$0 { kho.thongBao = nil } })) { Button("OK") { kho.thongBao = nil } } message: { Text(kho.thongBao ?? "") }
+    }
+}
+
+
+struct TrinhChonFileTXT: UIViewControllerRepresentable {
+    let hoanThanh: (URL?) -> Void
+
+    func makeCoordinator() -> DieuPhoi {
+        DieuPhoi(hoanThanh: hoanThanh)
+    }
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let loaiTXT = UTType(filenameExtension: "txt") ?? .plainText
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [loaiTXT, .plainText], asCopy: true)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+
+    final class DieuPhoi: NSObject, UIDocumentPickerDelegate {
+        let hoanThanh: (URL?) -> Void
+
+        init(hoanThanh: @escaping (URL?) -> Void) {
+            self.hoanThanh = hoanThanh
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            hoanThanh(urls.first)
+        }
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            hoanThanh(nil)
+        }
     }
 }

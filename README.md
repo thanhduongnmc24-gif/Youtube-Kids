@@ -122,3 +122,11 @@ Sửa file `TaiNguyen/VideoMacDinh.json`, mỗi phần tử gồm `link` và `da
 - Chấp nhận đúng file `.txt`, kiểm tra UTF-8 và loại bỏ BOM.
 - Hiện trạng thái đang nhập và thông báo kết quả kể cả khi toàn bộ video đã tồn tại.
 - Không thay đổi icon ứng dụng.
+
+
+## Bản v7.6
+- Bỏ fileImporter dùng chung bị treo trên iPad.
+- Dùng UIDocumentPickerViewController riêng cho file TXT với chế độ asCopy.
+- Callback chọn, hủy và nhập file được xử lý rõ ràng.
+- Trình chọn thư mục video vẫn hoạt động độc lập.
+- Không thay đổi icon ứng dụng.

@@ -184,8 +184,9 @@ final class KhoDuLieu: ObservableObject {
         let coQuyen = url.startAccessingSecurityScopedResource()
         defer { if coQuyen { url.stopAccessingSecurityScopedResource() } }
         do {
-            guard url.pathExtension.lowercased() == "txt" else {
-                thongBao = "Vui lòng chọn đúng file có đuôi .txt."
+            let duoiTep = url.pathExtension.lowercased()
+            guard duoiTep == "txt" || duoiTep.isEmpty else {
+                thongBao = "Vui lòng chọn đúng file văn bản TXT."
                 return
             }
             let data = try Data(contentsOf: url)
